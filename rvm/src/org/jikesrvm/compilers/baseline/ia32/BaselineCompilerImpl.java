@@ -2434,7 +2434,9 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
       }
     }
     // The field may be volatile
-    asm.emitMFENCE();
+    if (fieldRef.peekResolvedField().isVolatile()) {
+      asm.emitMFENCE();
+    }
   }
 
   @Override
@@ -2808,7 +2810,9 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
       }
     }
     // The field may be volatile.
-    asm.emitMFENCE();
+    if (fieldRef.peekResolvedField().isVolatile()) {
+      asm.emitMFENCE();
+    }
   }
 
   @Override
