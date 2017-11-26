@@ -2323,25 +2323,31 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
       return;
     }
     if (fieldRef.getSize() <= BYTES_IN_INT) {
-      // get static field - [SP--] = [T0<<0+JTOC]
+      // get static field - [SP--] = [T0 + JTOC]
       if (VM.BuildFor32Addr) {
         asm.emitPUSH_RegDisp(T0, Magic.getTocPointer().toWord().toOffset());
       } else {
         asm.generateJTOCloadInt(T0, T0);
         asm.emitPUSH_Reg(T0);
       }
-    } else { // field is two words (double or long)
+    } else {
       if (VM.VerifyAssertions) VM._assert(fieldRef.getSize() == BYTES_IN_LONG);
       if (VM.BuildFor32Addr) {
         // JMM: field could be volatile so we need to guarantee atomic access
-        if (SSE2_BASE) {
-          asm.emitMOVQ_Reg_RegDisp(XMM0, T0, Magic.getTocPointer().toWord().toOffset());
-          adjustStack(-2 * WORDSIZE, false);
-          asm.emitMOVQ_RegInd_Reg(SP, XMM0);
+        RVMField field = fieldRef.peekResolvedField();
+        if (field.isVolatile()) {
+          if (SSE2_BASE) {
+            asm.emitMOVQ_Reg_RegDisp(XMM0, T0, Magic.getTocPointer().toWord().toOffset());
+            adjustStack(-2 * WORDSIZE, false);
+            asm.emitMOVQ_RegInd_Reg(SP, XMM0);
+          } else {
+            asm.emitFLD_Reg_RegDisp_Quad(FP0, T0, Magic.getTocPointer().toWord().toOffset());
+            adjustStack(-2 * WORDSIZE, false);
+            asm.emitFSTP_RegInd_Reg_Quad(SP, FP0);
+          }
         } else {
-          asm.emitFLD_Reg_RegDisp_Quad(FP0, T0, Magic.getTocPointer().toWord().toOffset());
-          adjustStack(-2 * WORDSIZE, false);
-          asm.emitFSTP_RegInd_Reg_Quad(SP, FP0);
+          asm.emitPUSH_RegDisp(T0, Magic.getTocPointer().plus(WORDSIZE).toWord().toOffset());
+          asm.emitPUSH_RegDisp(T0, Magic.getTocPointer().toWord().toOffset());
         }
       } else {
         if (fieldRef.getNumberOfStackSlots() != 1) {
@@ -2360,14 +2366,14 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
       Barriers.compileGetstaticBarrierImm(asm, fieldOffset, fieldRef.getId());
       return;
     }
-    if (fieldRef.getSize() <= BYTES_IN_INT) { // field is one word
+    if (fieldRef.getSize() <= BYTES_IN_INT) {
       if (VM.BuildFor32Addr) {
         asm.emitPUSH_Abs(Magic.getTocPointer().plus(fieldOffset));
       } else {
         asm.generateJTOCloadInt(T0, fieldOffset);
         asm.emitPUSH_Reg(T0);
       }
-    } else { // field is two words (double or long)
+    } else {
       if (VM.VerifyAssertions) VM._assert(fieldRef.getSize() == BYTES_IN_LONG);
       if (VM.BuildFor32Addr) {
         // JMM: we need to guarantee atomic access for volatile fields
