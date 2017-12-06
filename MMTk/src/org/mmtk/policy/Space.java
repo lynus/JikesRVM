@@ -653,7 +653,7 @@ public abstract class Space {
           Log.write("->");
           Log.writeln(space.start.plus(space.extent.minus(1)));
         }
-        HeapLayout.mmapper.ensureMapped(space.start, space.extent.toInt() >> LOG_BYTES_IN_PAGE);
+        HeapLayout.mmapper.ensureMapped(space.start, space.extent.toLong() >> LOG_BYTES_IN_PAGE);
       }
     }
   }

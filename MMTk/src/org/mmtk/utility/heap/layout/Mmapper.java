@@ -59,7 +59,7 @@ public abstract class Mmapper {
    * @param start The start of the range to be mapped.
    * @param pages The size of the range to be mapped, in pages
    */
-  public abstract void ensureMapped(Address start, int pages);
+  public abstract void ensureMapped(Address start, long pages);
 
   /**
    * Is the page occupied by this object mapped ?
