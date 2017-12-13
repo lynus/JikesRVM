@@ -502,7 +502,7 @@ public abstract class Phase {
           MutatorContext mutator;
           while ((mutator = VM.activePlan.getNextMutator()) != null) {
             if (VM.DEBUG) VM.debugging.mutatorPhase(phaseId,mutator.getId(),true);
-            mutator.collectionPhase(phaseId, primary);
+            mutator.collectionPhase(phaseId, primary); // all collector threads scan all mutator
             if (VM.DEBUG) VM.debugging.mutatorPhase(phaseId,mutator.getId(),false);
           }
           break;

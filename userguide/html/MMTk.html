@@ -27,8 +27,8 @@ through to MMTk <a
 href="#x19-22800016.2">here</a> is another good place to start understanding how MMTk
 integrates with Jikes RVM. <a 
 href="#x19-21900016.1">Anatomy of a Garbage Collector</a> describes the major
-building blocks of an MMTk collector and <a 
-href="#x19-23300016.3">Scanning Objects in Jikes RV</a>M describes
+building blocks of an MMTk collector and <a
+href="#x19-23300016.3">Scanning Objects in Jikes RVM</a> describes
 how objects are scanned for their pointer ﬁelds during GC. MMTk also has a pure
 Java <a 
 href="TheMMTkTestHarness.html#x13-13600011">test harness</a> that allows development of garbage collectors in an IDE like
@@ -66,7 +66,7 @@ needed.
 class="cmtt-10">Plan</span></span></span>.
 Each ﬂavor of the manager is implemented by substituting a diﬀerent implementation
 of this class. Most plans inherit from class <span 
-class="cmtt-10">StopTheWorldGC </span>which ensures that all
+class="cmtt-10">StopTheWorld</span>which ensures that all
 active mutator threads (i.e. ones which do not perform the job of reclaiming storage)
 are suspended before reclamation is commenced. The argument passed to
                                                                   

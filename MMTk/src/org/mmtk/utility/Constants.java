@@ -72,8 +72,8 @@ public final class Constants {
   public static final int LOG_CARD_META_SIZE = 2;// each card consumes four bytes of metadata
   public static final int LOG_CARD_UNITS = 10;  // number of units tracked per card
   public static final int LOG_CARD_GRAIN = 0;   // track at byte grain, save shifting
-  public static final int LOG_CARD_BYTES = LOG_CARD_UNITS + LOG_CARD_GRAIN;
-  public static final int LOG_CARD_META_BYTES = EmbeddedMetaData.LOG_BYTES_IN_REGION - LOG_CARD_BYTES + LOG_CARD_META_SIZE;
+  public static final int LOG_CARD_BYTES = LOG_CARD_UNITS + LOG_CARD_GRAIN;     //    10 + 0
+  public static final int LOG_CARD_META_BYTES = EmbeddedMetaData.LOG_BYTES_IN_REGION - LOG_CARD_BYTES + LOG_CARD_META_SIZE;  // 22 - 10 +  2
   public static final int LOG_CARD_META_PAGES = LOG_CARD_META_BYTES - VM.LOG_BYTES_IN_PAGE;
   public static final int CARD_META_PAGES_PER_REGION = SUPPORT_CARD_SCANNING ? (1 << LOG_CARD_META_PAGES) : 0;
   public static final int CARD_MASK = (1 << LOG_CARD_BYTES) - 1;

@@ -84,7 +84,7 @@ import org.vmmagic.unboxed.Word;
    */
   private static final int LOG_DEFAULT_STEP_SIZE = 30; // 1G: let the external slow path dominate
   private static final int STEP_SIZE = 1 << (SUPPORT_CARD_SCANNING ? LOG_CARD_BYTES : LOG_DEFAULT_STEP_SIZE);
-  protected static final int LOG_BLOCK_SIZE = LOG_BYTES_IN_PAGE + 3;
+  protected static final int LOG_BLOCK_SIZE = LOG_BYTES_IN_PAGE + 3;       // a block of 8 page
   protected static final Word BLOCK_MASK = Word.one().lsh(LOG_BLOCK_SIZE).minus(Word.one());
   private static final int BLOCK_SIZE = (1 << LOG_BLOCK_SIZE);
 
@@ -292,7 +292,7 @@ import org.vmmagic.unboxed.Word;
     if (allowScanning && !region.isZero()) {
       Address nextRegion = getNextRegion(region);
       if (!nextRegion.isZero()) {
-        return consumeNextRegion(nextRegion, bytes, align, offset);
+        return consumeNextRegion(nextRegion, bytes, align, offset);  //check whether reach here.
       }
     }
 
@@ -348,13 +348,15 @@ import org.vmmagic.unboxed.Word;
    */
   private Address consumeNextRegion(Address nextRegion, int bytes, int align,
         int offset) {
-    setNextRegion(region,cursor);
+    setNextRegion(region,cursor);  //XXX cursor should be nextRegion? or cursor == nextRegion?
+    //setNextRegion(region, nextRegion);
+    //setDataEnd(region, cursor);
     region = nextRegion;
     cursor = getDataStart(nextRegion);
     updateLimit(getRegionLimit(nextRegion), nextRegion, bytes);
     setDataEnd(nextRegion,Address.zero());
     VM.memory.zero(false, cursor, limit.diff(cursor).toWord().toExtent());
-    reusePages(Conversions.bytesToPages(limit.diff(region)));
+    reusePages(Conversions.bytesToPages(limit.diff(region))); //no override reusePages implemented. Wonder the method is NEVER RECHEACHED.
 
     return alloc(bytes, align, offset);
   }

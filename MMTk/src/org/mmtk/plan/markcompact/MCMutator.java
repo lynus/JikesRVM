@@ -111,7 +111,7 @@ import org.vmmagic.unboxed.*;
   @Inline
   public final void collectionPhase(short phaseId, boolean primary) {
     if (phaseId == MC.PREPARE) {
-      mc.prepare();
+      mc.prepare(); //return the local space to global,and reset local;s cursor, limit, etc.
       super.collectionPhase(phaseId, primary);
       return;
     }

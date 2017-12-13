@@ -138,7 +138,7 @@ import org.vmmagic.pragma.*;
     if (MarkCompactCollector.VERY_VERBOSE) {
       Log.write("marking ", object);
     }
-    if (testAndMark(object)) {
+    if (testAndMark(object)) {  //true means this thread marked object.
       trace.processNode(object);
     } else if (!getForwardingPointer(object).isNull()) {
       if (MarkCompactCollector.VERY_VERBOSE) {
@@ -345,7 +345,7 @@ import org.vmmagic.pragma.*;
     if (regionList.isZero()) {
       regionList = region;
     } else {
-      appendRegion(regionList,region);
+      appendRegion(regionList,region);   //region is add to the tail. Each call to this method will traverse the list. There is scaling problem
     }
     lock.release();
   }

@@ -29,12 +29,12 @@ import org.vmmagic.unboxed.ObjectReference;
  *
  * All plans make a clear distinction between <i>global</i> and
  * <i>thread-local</i> activities, and divides global and local state
- * into separate class hierarchies.  Global activities must be
+ * into separate class hierarchies. Global activities must be
  * synchronized, whereas no synchronization is required for
  * thread-local activities.  There is a single instance of Plan (or the
  * appropriate sub-class), and a 1:1 mapping of PlanLocal to "kernel
  * threads" (aka CPUs).  Thus instance
- * methods of PlanLocal allow fast, unsychronized access to functions such as
+ * methods of PlanLocal allow fast, unsynchronized access to functions such as
  * allocation and collection.<p>
  *
  * The global instance defines and manages static resources
@@ -134,7 +134,7 @@ import org.vmmagic.unboxed.ObjectReference;
     if (phaseId == PREPARE) {
       super.collectionPhase(phaseId);
       markTrace.prepare();
-      mcSpace.prepare();
+      mcSpace.prepare();  // empty
       return;
     }
     if (phaseId == CLOSURE) {

@@ -537,7 +537,7 @@ public final class MarkCompactCollector {
           if (VM.VERIFY_ASSERTIONS) VM.assertions._assert(toCursor.isInRegion(copyTo));
           toCursor.copy(current, copyTo);
           if (VM.VERIFY_ASSERTIONS) VM.assertions._assert(toCursor.isInRegion(copyTo));
-          MarkCompactSpace.setForwardingPointer(copyTo, ObjectReference.nullReference());
+          // MarkCompactSpace.setForwardingPointer(copyTo, ObjectReference.nullReference());
         }
       }
       fromCursor.advanceToNextRegion();
