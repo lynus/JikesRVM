@@ -35,7 +35,7 @@ import org.vmmagic.unboxed.*;
   private static Extent initialHeapSize;
 
   /**
-   * The maximum heap size (-Xms) in bytes
+   * The maximum heap size (-Xmx) in bytes
    */
   private static Extent maxHeapSize;
 

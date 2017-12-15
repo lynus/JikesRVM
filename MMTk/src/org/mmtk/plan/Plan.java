@@ -862,6 +862,9 @@ public abstract class Plan {
     return HeapGrowthManager.getCurrentHeapSize();
   }
 
+  public static Extent getMaxMemory() {
+      return HeapGrowthManager.getMaxHeapSize();
+  }
   /* Instance methods */
 
   /**

@@ -94,6 +94,11 @@ public abstract class Space {
   protected final Address start;
   protected final Extent extent;
   protected Address headDiscontiguousRegion;
+  protected Address highest;
+  /****************************************************************************
+   * Write counter array whose element is for each cacheline grain
+   */
+  protected long writeCounts[];
 
   /****************************************************************************
    *
@@ -123,7 +128,7 @@ public abstract class Space {
     this.index = spaceCount++;
     spaces[index] = this;
     this.headDiscontiguousRegion = Address.zero();
-
+    this.highest = Address.zero();
     if (vmRequest.type == VMRequest.REQUEST_DISCONTIGUOUS) {
       this.contiguous = false;
       this.descriptor = SpaceDescriptor.createDescriptor();
@@ -177,6 +182,15 @@ public abstract class Space {
 
     VM.memory.setHeapRange(index, start, start.plus(extent));
     HeapLayout.vmMap.insert(start, extent, descriptor, this);
+
+    /*************************************************************************
+     * only allocate write counter array for the application heap
+     * So far, the array is not resizable, so make it unnecessarily large
+     */
+    //should allocate in boot sequence
+//    if (name != "boot" && name != "immortal" && name != "meta" && name != "los" && name != "sanity" && name != "non-moving"
+//      && name != "sm-code" && name != "lg-code")
+//      writeCounts = new long[Plan.getMaxMemory().toInt() >> VM.LOG_X86_CACHELINE];
 
     if (DEBUG) {
       Log.write(name);
@@ -493,7 +507,11 @@ public abstract class Space {
    * @param bytes The size of the newly allocated space
    * @param newChunk {@code true} if the new space encroached upon or started a new chunk or chunks.
    */
-  public void growSpace(Address start, Extent bytes, boolean newChunk) {}
+  public void growSpace(Address start, Extent bytes, boolean newChunk) {
+    if (highest.LT(start.plus(bytes))) {
+      highest = start.plus(bytes);
+    }
+  }
 
   /**
    * Release one or more contiguous chunks associated with a discontiguous
@@ -778,6 +796,10 @@ public abstract class Space {
    */
   public static Space[] getSpaces() {
     return spaces;
+  }
+
+  public Address getHighest() {
+    return highest;
   }
 
 }
