@@ -136,7 +136,7 @@ public final class ByteMapMmapper extends Mmapper {
    * @param pages The size of the range to be mapped, in pages
    */
   @Override
-  public void ensureMapped(Address start, int pages) {
+  public void ensureMapped(Address start, long pages) {
     int startChunk = addressToMmapChunksDown(start);
     int endChunk = addressToMmapChunksUp(start.plus(Conversions.pagesToBytes(pages)));
     for (int chunk = startChunk; chunk < endChunk; chunk++) {

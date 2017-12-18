@@ -379,7 +379,7 @@ public final class FragmentedMmapper extends Mmapper {
    * @param pages The size of the range to be mapped, in pages
    */
   @Override
-  public void ensureMapped(Address start, int pages) {
+  public void ensureMapped(Address start, long pages) {
     if (STATS) mapCounter.inc();
     final Address end = start.plus(Conversions.pagesToBytes(pages));
     if (VERBOSE) {
