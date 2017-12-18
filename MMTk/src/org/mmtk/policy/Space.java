@@ -26,6 +26,7 @@ import org.mmtk.utility.options.Options;
 import org.mmtk.utility.Conversions;
 import org.mmtk.utility.Log;
 
+import org.mmtk.utility.options.Verbose;
 import org.mmtk.vm.VM;
 
 import org.vmmagic.pragma.*;
@@ -94,7 +95,14 @@ public abstract class Space {
   protected final Address start;
   protected final Extent extent;
   protected Address headDiscontiguousRegion;
-
+  protected Address highest;
+  /****************************************************************************
+   *
+   *  Write counter array whose element is for each cacheline grain
+   */
+  protected long writeCounts[];
+  protected static Space[] writeCountsSpaces = new Space[2];
+  protected static int writecountsSpacesIndex = 0;
   /****************************************************************************
    *
    * Initialization
@@ -123,7 +131,7 @@ public abstract class Space {
     this.index = spaceCount++;
     spaces[index] = this;
     this.headDiscontiguousRegion = Address.zero();
-
+    this.highest = Address.zero();
     if (vmRequest.type == VMRequest.REQUEST_DISCONTIGUOUS) {
       this.contiguous = false;
       this.descriptor = SpaceDescriptor.createDescriptor();
@@ -493,7 +501,11 @@ public abstract class Space {
    * @param bytes The size of the newly allocated space
    * @param newChunk {@code true} if the new space encroached upon or started a new chunk or chunks.
    */
-  public void growSpace(Address start, Extent bytes, boolean newChunk) {}
+  public void growSpace(Address start, Extent bytes, boolean newChunk) {
+    if (highest.LT(start.plus(bytes))) {
+      highest = start.plus(bytes);
+    }
+  }
 
   /**
    * Release one or more contiguous chunks associated with a discontiguous
@@ -778,6 +790,50 @@ public abstract class Space {
    */
   public static Space[] getSpaces() {
     return spaces;
+  }
+
+  public Address getHighest() {
+    return highest;
+  }
+
+  /*************************************************************************
+   *
+   * only allocate write counter array for the application heap
+   * So far, the array is not resizable, so make it unnecessarily large
+   */
+  @Interruptible
+  public static void allocWriteCounters() {
+    String name;
+    for( Space sp : spaces) {
+      if (sp == null)
+        break;
+      name = sp.name;
+      if (name != "boot" && name != "immortal" && name != "meta" && name != "los" && name != "sanity" && name != "non-moving"
+              && name != "sm-code" && name != "lg-code") {
+        // can not make for heap larger than about 2000M
+        sp.writeCounts = new long[Plan.getMaxMemory().toInt() >> VM.LOG_X86_CACHELINE];
+        writeCountsSpaces[writecountsSpacesIndex++] = sp;
+        if (Options.verbose.getValue() > 2) {
+          Log.write("Allocate write counter for space: ");
+          Log.write(name);
+          Log.write(", for ");
+          Log.write(Plan.getMaxMemory().toInt() >> VM.LOG_X86_CACHELINE);
+          Log.writeln(" cacheline(64B)");
+        }
+      }
+    }
+  }
+
+  @Inline
+  public static void updateWriteCount(Address addr) {
+    Space sp = null;
+    if (isInSpace(writeCountsSpaces[0].descriptor, addr))
+      sp = writeCountsSpaces[0];
+    else if (writeCountsSpaces[1] != null && isInSpace(writeCountsSpaces[1].descriptor, addr))
+      sp = writeCountsSpaces[1];
+    if (sp != null) {
+      sp.writeCounts[addr.minus(sp.start.toWord().toOffset()).toInt()]++;
+    }
   }
 
 }

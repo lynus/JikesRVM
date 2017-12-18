@@ -344,6 +344,7 @@ public abstract class Plan {
   @Interruptible
   public void fullyBooted() {
     if (Options.harnessAll.getValue()) harnessBegin();
+    Space.allocWriteCounters();
   }
 
   public static final ParallelCollectorGroup parallelWorkers = new ParallelCollectorGroup("ParallelWorkers");
@@ -862,6 +863,9 @@ public abstract class Plan {
     return HeapGrowthManager.getCurrentHeapSize();
   }
 
+  public static Extent getMaxMemory() {
+      return HeapGrowthManager.getMaxHeapSize();
+  }
   /* Instance methods */
 
   /**

@@ -88,7 +88,8 @@ public final class VM {
 
   /** Exit code to pass if reflection for querying or creating important objects fails. */
   public static final int EXIT_CODE_REFLECTION_FAILURE = 2;
-
+  public static final int LOG_X86_CACHELINE = 6;
+  public static final int X86_CACHELINE_SIZE = 1 << LOG_X86_CACHELINE;
   /*
    * VM-specific functionality captured in a series of singleton classs
    */
