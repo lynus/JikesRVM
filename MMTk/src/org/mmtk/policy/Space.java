@@ -832,8 +832,12 @@ public abstract class Space {
     else if (writeCountsSpaces[1] != null && isInSpace(writeCountsSpaces[1].descriptor, addr))
       sp = writeCountsSpaces[1];
     if (sp != null) {
-      sp.writeCounts[addr.minus(sp.start.toWord().toOffset()).toInt()]++;
+      sp.writeCounts[addr.minus(sp.start.toWord().toOffset()).toInt() >> VM.LOG_X86_CACHELINE]++;
     }
+  }
+  @Inline
+  public static void updateWriteCountAddressRange(Address from, Address to) {
+
   }
 
 }

@@ -344,7 +344,6 @@ public abstract class Plan {
   @Interruptible
   public void fullyBooted() {
     if (Options.harnessAll.getValue()) harnessBegin();
-    Space.allocWriteCounters();
   }
 
   public static final ParallelCollectorGroup parallelWorkers = new ParallelCollectorGroup("ParallelWorkers");

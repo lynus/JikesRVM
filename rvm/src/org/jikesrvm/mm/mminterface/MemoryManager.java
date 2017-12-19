@@ -146,7 +146,7 @@ public final class MemoryManager {
   @Interruptible
   public static void postBoot() {
     Selected.Plan.get().processOptions();
-
+    Space.allocWriteCounters();
     if (Options.noReferenceTypes.getValue()) {
       RVMType.JavaLangRefReferenceReferenceField.makeTraced();
     }

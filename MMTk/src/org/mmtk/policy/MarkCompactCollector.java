@@ -383,9 +383,10 @@ public final class MarkCompactCollector {
         VM.assertions._assert(MarkCompactSpace.getForwardingPointer(from).toAddress().EQ(to.toAddress()));
         VM.assertions._assert(cursor.GT(region) && cursor.LE(limit));
       }
-      Address savedCursor = Address.zero();
-      if (VM.VERIFY_ASSERTIONS) savedCursor = cursor;
+      Address savedCursor = cursor;
+      //if (VM.VERIFY_ASSERTIONS) savedCursor = cursor;
       cursor = VM.objectModel.copyTo(from, to, cursor);
+      Space.updateWriteCountAddressRange(savedCursor, cursor);
       if (VM.VERIFY_ASSERTIONS) {
         if (cursor.LT(BumpPointer.getDataStart(region)) || cursor.GT(limit)) {
           Log.write("Copy of ", from);
