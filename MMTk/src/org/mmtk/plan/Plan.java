@@ -368,6 +368,7 @@ public abstract class Plan {
       Log.writeln(" ms]");
     }
     if (Options.verboseTiming.getValue()) printDetailedTiming(true);
+    Space.dumpWriteCounts();
   }
 
   /**

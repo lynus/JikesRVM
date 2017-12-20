@@ -22,6 +22,7 @@ import org.mmtk.utility.heap.PageResource;
 import org.mmtk.utility.heap.SpaceDescriptor;
 import org.mmtk.utility.heap.VMRequest;
 import org.mmtk.utility.heap.layout.HeapLayout;
+import org.mmtk.utility.heap.layout.Map64;
 import org.mmtk.utility.options.Options;
 import org.mmtk.utility.Conversions;
 import org.mmtk.utility.Log;
@@ -31,6 +32,8 @@ import org.mmtk.vm.VM;
 
 import org.vmmagic.pragma.*;
 import org.vmmagic.unboxed.*;
+
+import java.io.*;
 
 /**
  * This class defines and manages spaces.  Each policy is an instance
@@ -809,7 +812,7 @@ public abstract class Space {
         break;
       name = sp.name;
       if (name != "boot" && name != "immortal" && name != "meta" && name != "los" && name != "sanity" && name != "non-moving"
-              && name != "sm-code" && name != "lg-code") {
+              && name != "sm-code" && name != "lg-code" && name != "vm") {
         // can not make for heap larger than about 2000M
         sp.writeCounts = new long[Plan.getMaxMemory().toInt() >> VM.LOG_X86_CACHELINE];
         writeCountsSpaces[writecountsSpacesIndex++] = sp;
@@ -837,7 +840,76 @@ public abstract class Space {
   }
   @Inline
   public static void updateWriteCountAddressRange(Address from, Address to) {
+    Space sp = null;
+    if (isInSpace(writeCountsSpaces[0].descriptor, from))
+      sp = writeCountsSpaces[0];
+    else if (writeCountsSpaces[1] != null && isInSpace(writeCountsSpaces[1].descriptor, from))
+      sp = writeCountsSpaces[1];
+    if (sp == null)
+      return;
+    //right now only support 64-bit VM
+    Address base = ((Map64)HeapLayout.vmMap).getSpaceBaseAddress(sp);
+    int start = from.diff(base).toInt() >> VM.LOG_X86_CACHELINE;
+    int end =  to.diff(base).toInt() >> VM.LOG_X86_CACHELINE;
+    int i = start;
+    do {
+      sp.writeCounts[i]++;
+      i++;
+    } while(i < end);
+  }
+  @Inline
+  @Interruptible
+  public static void dumpWriteCounts() {
+    FileOutputStream out = null;
+    OutputStreamWriter ost = null;
+    BufferedWriter writer = null;
+    int i;
+    Space sp = writeCountsSpaces[0];
+    Log.write("Dumping write counts for space ");
+    Log.writel(sp.name);
+    Log.write("  heap base: ");
+    Log.writeln(((Map64)HeapLayout.vmMap).getSpaceBaseAddress(sp));
+
+    try {
+      out = new FileOutputStream(new File(sp.name));
+      ost = new OutputStreamWriter(out);
+      writer = new BufferedWriter(ost);
+      for (i= 0; i < sp.writeCounts.length - 1; i++) {
+        writer.write("" + sp.writeCounts[i] + ",");
+      }
+      writer.write("" + sp.writeCounts[i]);
+      writer.flush();
+    } catch (Exception e) {
+      e.printStackTrace();
+      VM.assertions.fail("I/O error dumping write counts");
+    }
+
+    Log.write("Done dumping write counts for space ");
+    Log.writeln(sp.name);
+    if ((sp = writeCountsSpaces[1]) == null)
+      return;
+    Log.write("Dumping write counts for space ");
+    Log.writeln(sp.name);
+    try {
+      out = new FileOutputStream(new File(sp.name));
+      ost = new OutputStreamWriter(out);
+      writer = new BufferedWriter(ost);
+      for (i= 0; i < sp.writeCounts.length - 1; i++) {
+        writer.write("" + sp.writeCounts[i] + ",");
+      }
+      writer.write("" + sp.writeCounts[i]);
+    } catch (Exception e) {
+      e.printStackTrace();
+      VM.assertions.fail("I/O error dumping write counts");
+    }
+    try {
+      writer.close();
+      ost.close();
+      out.close();
+    } catch (Exception e) {
+      e.printStackTrace();
+      VM.assertions.fail("Closing file error");
+    }
 
   }
-
 }

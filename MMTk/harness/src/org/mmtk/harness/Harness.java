@@ -224,6 +224,7 @@ public class Harness {
                 maxHeap.getBytes().toLong() / MB);
           }
           HeapGrowthManager.boot(initHeap.getBytes(), maxHeap.getBytes());
+          Space.allocWriteCounters();
 
           /* Check options */
           assert Options.noFinalizer.getValue() : "noFinalizer must be true";

@@ -313,4 +313,9 @@ public final class Map64 extends Map {
     return descriptorMap[spaceIndex(object)];
   }
 
+  @Inline
+  public Address getSpaceBaseAddress(Space sp) {
+    return baseAddress.get(sp.getIndex());
+  }
+
 }
