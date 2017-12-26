@@ -368,7 +368,7 @@ public abstract class Plan {
       Log.writeln(" ms]");
     }
     if (Options.verboseTiming.getValue()) printDetailedTiming(true);
-    Space.dumpWriteCounts();
+    Space.dumpWriteCountSysWrite();
   }
 
   /**
@@ -676,6 +676,7 @@ public abstract class Plan {
       Log.write("    Collection time: ");
       totalTime.printLast();
       Log.writeln(" ms");
+      Space.dumpWriteCounts(Stats.gcCount());
     }
   }
 

@@ -816,7 +816,7 @@ public abstract class Space {
         // can not make for heap larger than about 2000M
         sp.writeCounts = new long[Plan.getMaxMemory().toInt() >> VM.LOG_X86_CACHELINE];
         writeCountsSpaces[writecountsSpacesIndex++] = sp;
-        if (Options.verbose.getValue() > 2) {
+        if (Options.verbose.getValue() > 1) {
           Log.write("Allocate write counter for space: ");
           Log.write(name);
           Log.write(", for ");
@@ -858,20 +858,29 @@ public abstract class Space {
     } while(i < end);
   }
   @Inline
-  @Interruptible
-  public static void dumpWriteCounts() {
+  @UninterruptibleNoWarn
+  public static void dumpWriteCounts(int gc) {
     FileOutputStream out = null;
     OutputStreamWriter ost = null;
     BufferedWriter writer = null;
     int i;
     Space sp = writeCountsSpaces[0];
     Log.write("Dumping write counts for space ");
-    Log.writel(sp.name);
+    if (gc == -1)
+      Log.writeln(sp.name);
+    else {
+      Log.write(sp.name);
+      Log.writeln("  #" + gc);
+    }
+
     Log.write("  heap base: ");
     Log.writeln(((Map64)HeapLayout.vmMap).getSpaceBaseAddress(sp));
 
     try {
-      out = new FileOutputStream(new File(sp.name));
+      if (gc != -1)
+        out = new FileOutputStream(new File(sp.name + gc));
+      else
+        out = new FileOutputStream(new File(sp.name));
       ost = new OutputStreamWriter(out);
       writer = new BufferedWriter(ost);
       for (i= 0; i < sp.writeCounts.length - 1; i++) {
@@ -885,13 +894,20 @@ public abstract class Space {
     }
 
     Log.write("Done dumping write counts for space ");
-    Log.writeln(sp.name);
-    if ((sp = writeCountsSpaces[1]) == null)
+    sp = writeCountsSpaces[1];
+    if (sp == null)
       return;
-    Log.write("Dumping write counts for space ");
-    Log.writeln(sp.name);
+    if (gc == -1)
+      Log.writeln(sp.name);
+    else {
+      Log.write(sp.name);
+      Log.writeln("  #" + gc);
+    }
     try {
-      out = new FileOutputStream(new File(sp.name));
+      if (gc != -1)
+        out = new FileOutputStream(new File(sp.name + gc));
+      else
+        out = new FileOutputStream(new File(sp.name));
       ost = new OutputStreamWriter(out);
       writer = new BufferedWriter(ost);
       for (i= 0; i < sp.writeCounts.length - 1; i++) {
@@ -911,5 +927,41 @@ public abstract class Space {
       VM.assertions.fail("Closing file error");
     }
 
+  }
+
+  public static void dumpWriteCountSysWrite() {
+    int i;
+    Space sp = writeCountsSpaces[0];
+    Log.write("Dumping write counts for space ");
+    Log.write("  heap base: ");
+    Log.write(((Map64)HeapLayout.vmMap).getSpaceBaseAddress(sp));
+    Log.write("  length: ");
+    Log.writeln(sp.writeCounts.length);
+    for (i= 0; i < sp.writeCounts.length - 1; i++) {
+      Log.write(sp.writeCounts[i]);
+      Log.write(",");
+      if (i % 500 == 0)
+        Log.flush();
+    }
+    Log.write(sp.writeCounts[i]);
+    Log.flush();
+    Log.writeln();
+
+    sp = writeCountsSpaces[1];
+    if (sp == null)
+      return;
+    Log.write("Dumping write counts for space ");
+    Log.write("  heap base: ");
+    Log.write(((Map64)HeapLayout.vmMap).getSpaceBaseAddress(sp));
+    Log.write("  length: ");
+    Log.writeln(sp.writeCounts.length);
+    for (i= 0; i < sp.writeCounts.length - 1; i++) {
+      Log.write(sp.writeCounts[i]);
+      Log.write(",");
+      if (i % 500 == 0)
+        Log.flush();
+    }
+    Log.write(sp.writeCounts[i]);
+    Log.flush();
   }
 }
