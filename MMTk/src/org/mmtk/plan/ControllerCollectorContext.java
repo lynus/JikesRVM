@@ -107,7 +107,9 @@ public class ControllerCollectorContext extends CollectorContext {
         if (Options.variableSizeHeap.getValue() && !userTriggeredCollection) {
           // Don't consider changing the heap size if the application triggered the collection
           if (Options.verbose.getValue() >= 5) Log.writeln("[STWController: Considering heap size.]");
-          HeapGrowthManager.considerHeapSize();
+          if (HeapGrowthManager.considerHeapSize()) {
+            Plan.counterSpace.grow();
+          }
         }
         HeapGrowthManager.reset();
       }

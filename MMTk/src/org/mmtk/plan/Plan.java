@@ -15,11 +15,7 @@ package org.mmtk.plan;
 import static org.mmtk.utility.Constants.*;
 import static org.mmtk.vm.VM.EXIT_CODE_REFLECTION_FAILURE;
 
-import org.mmtk.policy.MarkSweepSpace;
-import org.mmtk.policy.Space;
-import org.mmtk.policy.ImmortalSpace;
-import org.mmtk.policy.RawPageSpace;
-import org.mmtk.policy.LargeObjectSpace;
+import org.mmtk.policy.*;
 import org.mmtk.utility.alloc.LinearScan;
 import org.mmtk.utility.Conversions;
 import org.mmtk.utility.HeaderByte;
@@ -125,6 +121,8 @@ public abstract class Plan {
   public static final MarkSweepSpace smallCodeSpace = USE_CODE_SPACE ? new MarkSweepSpace("sm-code", VMRequest.discontiguous()) : null;
   public static final LargeObjectSpace largeCodeSpace = USE_CODE_SPACE ? new LargeObjectSpace("lg-code", VMRequest.discontiguous()) : null;
 
+  public static final CountingSpace counterSpace = new CountingSpace("write-counter", VMRequest.discontiguous());
+  public static int targetSpaceDesc = -1;
   public static int pretenureThreshold = Integer.MAX_VALUE;
 
   /* Space descriptors */
@@ -236,6 +234,9 @@ public abstract class Plan {
    */
   @Interruptible
   public void enableCollection() {
+    counterSpace.setLimit(HeapGrowthManager.getMaxHeapSize());
+    counterSpace.populateCounters(totalMemory());
+    targetSpaceDesc = counterSpace.getTargetSpace();
     int actualThreadCount = determineThreadCount();
 
     if (VM.VERIFY_ASSERTIONS) {
@@ -860,6 +861,9 @@ public abstract class Plan {
    */
   public static Extent totalMemory() {
     return HeapGrowthManager.getCurrentHeapSize();
+  }
+  public static Extent getMaxMemory() {
+    return HeapGrowthManager.getMaxHeapSize();
   }
 
   /* Instance methods */
