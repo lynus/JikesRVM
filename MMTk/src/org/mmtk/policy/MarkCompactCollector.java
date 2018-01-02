@@ -12,6 +12,7 @@
  */
 package org.mmtk.policy;
 
+import org.mmtk.plan.Plan;
 import org.mmtk.plan.markcompact.MC;
 import org.mmtk.utility.Log;
 import org.mmtk.utility.alloc.Allocator;
@@ -383,8 +384,7 @@ public final class MarkCompactCollector {
         VM.assertions._assert(MarkCompactSpace.getForwardingPointer(from).toAddress().EQ(to.toAddress()));
         VM.assertions._assert(cursor.GT(region) && cursor.LE(limit));
       }
-      Address savedCursor = Address.zero();
-      if (VM.VERIFY_ASSERTIONS) savedCursor = cursor;
+      Address savedCursor = cursor;
       cursor = VM.objectModel.copyTo(from, to, cursor);
       if (VM.VERIFY_ASSERTIONS) {
         if (cursor.LT(BumpPointer.getDataStart(region)) || cursor.GT(limit)) {
@@ -396,9 +396,13 @@ public final class MarkCompactCollector {
         }
         VM.assertions._assert(cursor.GT(region) && cursor.LE(limit));
       }
+      //duplicate?
       MarkCompactSpace.setForwardingPointer(to, ObjectReference.nullReference());
       if (VM.VERIFY_ASSERTIONS)
         VM.assertions._assert(VM.objectModel.getObjectEndAddress(to).LE(limit));
+      Plan.updateWriteCountRange(savedCursor, cursor);
+//      if (from.toAddress().LT(to.toAddress()))
+//        Log.writeln("from is less than to!");
     }
 
     /**
@@ -551,9 +555,16 @@ public final class MarkCompactCollector {
      * Return unused pages to the global page resource
      */
     Address region = toCursor.snip();
+//    Log.write("fist region at this round return to global: ");
+//    Log.writeln(region);
     while (!region.isZero()) {
       Address nextRegion = MarkCompactLocal.getNextRegion(region);
+//      if (nextRegion.isZero()) {
+//        Log.write("last region at this round return to global: ");
+//        Log.writeln(region);
+//      }
       space.release(region);
+
       region = nextRegion;
     }
   }

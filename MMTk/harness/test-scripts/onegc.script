@@ -1,0 +1,11 @@
+option baseHeap64 "40960k";
+
+void main() {
+  object parent = alloc(20000, 0, false);
+  int j=0;
+  while (j < 20000) {
+    parent.object[j]=alloc(0, 5*16, false);
+    j=j+1;
+  }
+  gc();
+}

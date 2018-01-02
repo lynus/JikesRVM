@@ -122,7 +122,7 @@ public abstract class Plan {
   public static final LargeObjectSpace largeCodeSpace = USE_CODE_SPACE ? new LargeObjectSpace("lg-code", VMRequest.discontiguous()) : null;
 
   public static final CountingSpace counterSpace = new CountingSpace("write-counter", VMRequest.discontiguous());
-  public static int targetSpaceDesc = -1;
+  public static Space targetSpace = null;
   public static int pretenureThreshold = Integer.MAX_VALUE;
 
   /* Space descriptors */
@@ -236,7 +236,10 @@ public abstract class Plan {
   public void enableCollection() {
     counterSpace.setLimit(HeapGrowthManager.getMaxHeapSize());
     counterSpace.populateCounters(totalMemory());
-    targetSpaceDesc = counterSpace.getTargetSpace();
+    targetSpace = counterSpace.getTargetSpace();
+    Log.write("get target space: ");
+    Log.writeln(targetSpace.getName());
+
     int actualThreadCount = determineThreadCount();
 
     if (VM.VERIFY_ASSERTIONS) {
@@ -369,6 +372,7 @@ public abstract class Plan {
       Log.writeln(" ms]");
     }
     if (Options.verboseTiming.getValue()) printDetailedTiming(true);
+    counterSpace.dumpCounts();
   }
 
   /**
@@ -1084,5 +1088,10 @@ public abstract class Plan {
    */
   public final Class<?> getSpecializedScanClass(int id) {
     return TransitiveClosure.getSpecializedScanClass(id);
+  }
+
+  @Inline
+  public static void updateWriteCountRange(Address start, Address end) {
+    counterSpace.updateCounter(start, end);
   }
 }

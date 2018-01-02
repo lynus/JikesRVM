@@ -43,7 +43,7 @@ public final class RawMemoryFreeList extends GenericFreeList {
    *
    * Assuming that each unit represents a 4096-byte page, the maximum size
    * addressable by this map is ~ 2^40 bits.  Exceeding this requires increasing
-   * the page size or changing the interface to the map from into to Word or long.
+   * the page size or changing the interface to the map from int to Word or long.
    */
 
   /** log2 of the number of bits used by a free list entry (two entries per unit) */

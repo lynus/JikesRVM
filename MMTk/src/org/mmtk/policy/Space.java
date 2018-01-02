@@ -453,7 +453,8 @@ public abstract class Space {
       VM.collection.blockForGC();
       return Address.zero();
     }
-
+//    if (this == Plan.targetSpace)
+//      Plan.updateWriteCountRange(rtn, rtn.plus(pages << 12));
     return rtn;
   }
 

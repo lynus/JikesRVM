@@ -44,4 +44,8 @@ import org.vmmagic.unboxed.Extent;
     public void setLimit(Extent limit) {
         this.limit = this.start.plus(limit);
     }
+
+    public Address getLimit() {
+        return limit;
+    }
 }

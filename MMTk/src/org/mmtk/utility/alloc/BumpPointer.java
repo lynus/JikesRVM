@@ -505,6 +505,8 @@ import org.vmmagic.unboxed.Word;
     } else if (limit.NE(start) ||
                region.diff(start.plus(size)).toWord().toExtent().GT(maximumRegionSize())) {
       /* non contiguous or over-size, initialize new region */
+//      if(limit.GT(start))
+//        Log.write("here");
       setNextRegion(region,start);
       setDataEnd(region,cursor);
       region = start;

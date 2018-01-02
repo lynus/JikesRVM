@@ -73,7 +73,8 @@ public class JavaMonitor extends org.mmtk.vm.Monitor {
       long start = startWait();
       while (savedCount == counter && !timedOut(start)) {
         try {
-          monitor.wait(WAIT_TIME);
+          //monitor.wait(WAIT_TIME);
+          monitor.wait();
         } catch (InterruptedException e) { }
       }
       if (timedOut(start)) {
