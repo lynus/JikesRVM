@@ -12,10 +12,7 @@ import org.mmtk.utility.heap.layout.Map64;
 import org.mmtk.utility.options.Options;
 import org.mmtk.vm.VM;
 import org.vmmagic.pragma.Uninterruptible;
-import org.vmmagic.unboxed.Address;
-import org.vmmagic.unboxed.Extent;
-import org.vmmagic.unboxed.ObjectReference;
-import org.vmmagic.unboxed.Offset;
+import org.vmmagic.unboxed.*;
 
 @Uninterruptible public class CountingSpace extends Space {
     private Extent length;
@@ -88,16 +85,18 @@ import org.vmmagic.unboxed.Offset;
             VM.assertions._assert(isInSpace(Plan.targetSpace.getDescriptor(), start)
                     && isInSpace(Plan.targetSpace.getDescriptor(), end));
         Address base = ((Map64) HeapLayout.vmMap).getSpaceBaseAddress(Plan.targetSpace);
+        start = start.toWord().and(Word.fromIntSignExtend(~7)).toAddress();
+        end = end.plus(7).toWord().and(Word.fromIntSignExtend(~7)).toAddress();
         Offset from = start.diff(base);
         end  = this.start.plus(end.diff(base));
         if (VM.VERIFY_ASSERTIONS)
             VM.assertions._assert(end.LE(((CountingPageResource)pr).getLimit()));
         Address addr = this.start.plus(from);
         do {
-            byte val = addr.loadByte();
+            long val = addr.loadLong();
             val++;
             addr.store(val);
-            addr = addr.plus(1);
+            addr = addr.plus(8);
         } while (addr.LT(end));
     }
 
@@ -113,18 +112,15 @@ import org.vmmagic.unboxed.Offset;
         Address addr = start;
         int thre = 0;
         int i = 0;
-        int sum;
+        long sum;
         while (addr.plus(4096).LE(end)) {
             sum = 0;
-            for(i = 0; i < 4096; i++) {
-                sum = sum + addr.loadByte();
-                addr = addr.plus(1);
+            for(i = 0; i < 4096/8; i++) {
+                sum = sum + addr.loadLong();
+                addr = addr.plus(8);
             }
-//            if (sum - ((sum >> 12) <<12) <= 410)
-//                sum = (sum >> 12) + 1;
-//            else
-                sum = sum >> 12;
-            Log.write(sum);
+            double mean = sum / 512;
+            Log.write(mean, 1);
             Log.write(',');
             thre++;
             if (thre % 100 == 0) {
