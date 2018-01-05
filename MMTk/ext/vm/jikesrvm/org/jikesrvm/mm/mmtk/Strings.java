@@ -18,7 +18,7 @@ import org.jikesrvm.util.Services;
 import org.vmmagic.pragma.*;
 
 @Uninterruptible
-public final class Strings extends org.mmtk.vm.Strings {
+public class Strings extends org.mmtk.vm.Strings {
 
   @Override
   public void write(char [] c, int len) {

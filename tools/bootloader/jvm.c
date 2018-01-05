@@ -68,6 +68,7 @@ char *bootDataFilename;
 
 /** File name for part of boot image containing the root map */
 char *bootRMapFilename;
+int logFileDesc = 0;
 
 Extent initialHeapSize;
 Extent maximumHeapSize;
@@ -441,7 +442,9 @@ int createVM(int vmInSeparateThread)
   bootRecord->verboseBoot      = verboseBoot;
   bootRecord->verboseSignalHandling = verboseSignalHandling;
   bootRecord->bytesInPage = pageSize;
-
+  //bootRecord->logFileDesc == 0 indicate user do not specify a log file name(-X:mutatorWCfile=)
+  //In java side, code using log file i/o should be aware of this situation.
+  bootRecord->logFileDesc = logFileDesc;
   /* write syscall linkage information into boot record */
   setLinkage(bootRecord);
 

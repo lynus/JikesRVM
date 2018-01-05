@@ -731,6 +731,22 @@ public class VM extends Properties {
       }
     }
   }
+
+  @NoInline
+  public static void fwrite(int fd, String value) {
+    if (value == null) {
+      write("null");
+    } else {
+      if (runningVM) {
+        char[] chars = java.lang.JikesRVMSupport.getBackingCharArray(value);
+        int numChars = java.lang.JikesRVMSupport.getStringLength(value);
+        int offset = java.lang.JikesRVMSupport.getStringOffset(value);
+        fwrite(fd, chars, offset, numChars);
+      } else {
+        writeNotRunningVM(value);
+      }
+    }
+  }
   @UninterruptibleNoWarn("Interruptible code not reachable at runtime")
   private static void writeNotRunningVM(String value) {
     if (VM.VerifyAssertions) VM._assert(!VM.runningVM);
@@ -755,6 +771,14 @@ public class VM extends Properties {
     }
   }
 
+  @NoInline
+  public static void fwrite(int fd, char[] value, int len) {
+    sysCall.sysWriteBytes(fd, Magic.objectAsAddress(value), len);
+  }
+  @NoInline
+  public static void fwrite(int fd, char[] value, int offset, int len) {
+    sysCall.sysWriteBytes(fd, Magic.objectAsAddress(value).plus(offset), len);
+  }
   /**
    * Low level print of a <code>char</code>to console.
    * @param value       The character to print
@@ -805,6 +829,36 @@ public class VM extends Properties {
     if (runningVM) {
       int mode = (value < -(1 << 20) || value > (1 << 20)) ? 2 : 0; // hex only or decimal only
       sysCall.sysConsoleWriteInteger(value, mode);
+    } else {
+      writeNotRunningVM(value);
+    }
+  }
+
+  //copy from mmtk.util.Log
+  private static byte [] int2strbuf = new byte[20];
+  @NoInline
+  public static void fwrite(int fd, int value) {
+    if (runningVM) {
+      boolean negative = value < 0;
+      int nextDigit;
+      byte nextChar;
+      int index = 20 - 1;
+      byte zero = 48; //ascii '0'
+      byte tmp;
+      nextDigit = value % 10;
+      nextChar = (byte)(zero + (negative ? - nextDigit : nextDigit));
+      int2strbuf[index--] = nextChar;
+      value = value / 10;
+      while (value != 0) {
+        nextDigit = value % 10;
+        nextChar = (byte)(zero + (negative ? - nextDigit : nextDigit));
+        int2strbuf[index--] = nextChar;
+        value = value / 10;
+      }
+      if (negative) {
+        int2strbuf[index--] = '-';
+      }
+      sysCall.sysWriteBytes(fd, Magic.objectAsAddress(int2strbuf).plus(index + 1), 20 - index);
     } else {
       writeNotRunningVM(value);
     }
@@ -1150,6 +1204,13 @@ public class VM extends Properties {
   public static void sysWrite(char[] c, int l) {
     swLock();
     write(c, l);
+    swUnlock();
+  }
+
+  @NoInline
+  public static void sysFileWrite(int fd, char[] c, int l) {
+    swLock();
+    fwrite(fd, c, l);
     swUnlock();
   }
 
@@ -2117,6 +2178,12 @@ public class VM extends Properties {
     write(": ");
   }
 
+  private  static void showThreadToFile(int fd) {
+    fwrite(fd, "Thread ");
+    fwrite(fd, RVMThread.getCurrentThread().getThreadSlot());
+    fwrite(fd, ": ");
+  }
+
   @NoInline
   public static void tsysWriteln(String s) {
     swLock();
@@ -2189,6 +2256,14 @@ public class VM extends Properties {
     swLock();
     showThread();
     write(c, l);
+    swUnlock();
+  }
+
+  @NoInline
+  public static void tsysFileWrite(int fd, char[] buf, int l) {
+    swLock();
+    showThreadToFile(fd);
+    fwrite(fd, buf, l);
     swUnlock();
   }
 

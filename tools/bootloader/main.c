@@ -80,8 +80,9 @@ Extent determinePageSize();
 #define BOOTCLASSPATH_A_INDEX         BOOTCLASSPATH_P_INDEX + 1
 #define PROCESSORS_INDEX              BOOTCLASSPATH_A_INDEX + 1
 #define VERBOSE_SIGNAL_HANDLING       PROCESSORS_INDEX + 1
+#define MUTATORWCFILE_INDEX                 VERBOSE_SIGNAL_HANDLING +1
 
-#define numNonstandardArgs      VERBOSE_SIGNAL_HANDLING + 1
+#define numNonstandardArgs      MUTATORWCFILE_INDEX + 1
 
 static const char* nonStandardArgs[numNonstandardArgs] = {
   "-X",
@@ -105,6 +106,7 @@ static const char* nonStandardArgs[numNonstandardArgs] = {
   "-Xbootclasspath/a:",
   "-X:availableProcessors=",
   "-X:verboseSignalHandling",
+  "-X:mutatorWCfile=",
 };
 
 // a NULL-terminated list.
@@ -422,7 +424,16 @@ static const char ** processCommandLineArguments(JavaVMInitArgs *initArgs, const
       bootRMapFilename = (char *)(token + 6);
       continue;
     }
-
+    if (STRNEQUAL(token, nonStandardArgs[MUTATORWCFILE_INDEX], 17)) {
+        extern int logFileDesc;
+        const char *subtoken = (char *)(token + 17);
+        int fd = open(subtoken, O_WRONLY|O_CREAT);
+        if(fd == -1) {
+            ERROR_PRINTF("can't open WCFile %s : %s\n", subtoken, strerror(errno));
+            sysExit(EXIT_STATUS_SYSCALL_TROUBLE);
+        }
+        logFileDesc = fd;
+    }
     //
     // All VM directives that are not handled here but in VM.java
     // must be identified.
