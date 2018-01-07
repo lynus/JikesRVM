@@ -22,5 +22,6 @@ JVM_0.1 {
     createVM;
     sysExit;
     JNI_CreateJavaVM;
+    logFileDesc;
   local : *;
 };
