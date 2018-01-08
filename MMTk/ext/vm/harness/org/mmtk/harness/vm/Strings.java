@@ -49,4 +49,9 @@ public class Strings extends org.mmtk.vm.Strings {
     }
     return count;
   }
+
+  @Override
+  public boolean openFile() {
+    return false;
+  }
 }

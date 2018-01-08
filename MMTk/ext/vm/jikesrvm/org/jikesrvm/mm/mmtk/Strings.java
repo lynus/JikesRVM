@@ -42,6 +42,14 @@ public class Strings extends org.mmtk.vm.Strings {
   }
 
   @Override
+  public boolean openFile() {
+    if (logFileDesc != 0)
+      return true;
+    else
+      return false;
+  }
+
+  @Override
   public int copyStringToChars(String str, char [] dst,
                                int dstBegin, int dstEnd) {
     if (!VM.runningVM)

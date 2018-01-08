@@ -107,7 +107,7 @@ public class Log {
 
   /** buffer for building string representations of longs */
   private final char[] tempBuffer = new char[TEMP_BUFFER_SIZE];
-  private boolean toFile = false;
+
   /** constructor */
   public Log() {
     for (int i = 0; i < OVERFLOW_SIZE; i++) {
@@ -115,10 +115,6 @@ public class Log {
     }
   }
 
-  public Log(boolean toFile) {
-    super();
-    this.toFile = toFile;
-  }
   /**
    * writes a boolean. Either "true" or "false" is logged.
    *
@@ -881,7 +877,7 @@ public class Log {
    *
    * @param c the character to add
    */
-  private void addToBuffer(char c) {
+  protected void addToBuffer(char c) {
     if (bufferIndex < MESSAGE_BUFFER_SIZE) {
       buffer[bufferIndex++] = c;
     } else {
@@ -895,7 +891,7 @@ public class Log {
    *
    * @param s the string to add
    */
-  private void addToBuffer(String s) {
+  protected void addToBuffer(String s) {
     if (bufferIndex < MESSAGE_BUFFER_SIZE) {
       bufferIndex += VM.strings.copyStringToChars(s, buffer, bufferIndex, MESSAGE_BUFFER_SIZE + 1);
       if (bufferIndex == MESSAGE_BUFFER_SIZE + 1) {
@@ -914,19 +910,13 @@ public class Log {
   /**
    * flushes the buffer
    */
-  private void flushBuffer() {
+  protected void flushBuffer() {
     int newlineAdjust = overflowLastChar == NEW_LINE_CHAR ? 0 : -1;
     int totalMessageSize = overflow ? (MESSAGE_BUFFER_SIZE + OVERFLOW_SIZE + newlineAdjust) : bufferIndex;
     if (threadIdFlag) {
-      if (toFile)
-        VM.strings.fwriteThreadId(buffer, totalMessageSize);
-      else
-        VM.strings.writeThreadId(buffer, totalMessageSize);
+      VM.strings.writeThreadId(buffer, totalMessageSize);
     } else {
-      if (toFile)
-        VM.strings.fwrite(buffer, totalMessageSize);
-      else
-        VM.strings.write(buffer, totalMessageSize);
+      VM.strings.write(buffer, totalMessageSize);
     }
     threadIdFlag = false;
     overflow = false;
@@ -938,7 +928,7 @@ public class Log {
    * sets the flag so that a thread identifier will be included before
    * the logged message
    */
-  private void setThreadIdFlag() {
+  protected void setThreadIdFlag() {
     threadIdFlag = true;
   }
 
@@ -946,14 +936,14 @@ public class Log {
    * @return the buffer for building string representations of integers.
    * There is one of these buffers for each Log instance.
    */
-  private static char[] getIntBuffer() {
+  protected static char[] getIntBuffer() {
     return getLog().getTempBuffer();
   }
 
   /**
    * @return the buffer for building string representations of integers
    */
-  private char[] getTempBuffer() {
+  protected char[] getTempBuffer() {
     return tempBuffer;
   }
 }

@@ -50,4 +50,6 @@ import org.vmmagic.pragma.Uninterruptible;
    */
   public abstract int copyStringToChars(String src, char [] dst,
       int dstBegin, int dstEnd);
+
+  public abstract boolean openFile();
 }
