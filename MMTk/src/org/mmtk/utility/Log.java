@@ -107,7 +107,7 @@ public class Log {
 
   /** buffer for building string representations of longs */
   private final char[] tempBuffer = new char[TEMP_BUFFER_SIZE];
-
+  private boolean toFile = false;
   /** constructor */
   public Log() {
     for (int i = 0; i < OVERFLOW_SIZE; i++) {
@@ -115,6 +115,10 @@ public class Log {
     }
   }
 
+  public Log(boolean toFile) {
+    super();
+    this.toFile = toFile;
+  }
   /**
    * writes a boolean. Either "true" or "false" is logged.
    *
@@ -914,9 +918,15 @@ public class Log {
     int newlineAdjust = overflowLastChar == NEW_LINE_CHAR ? 0 : -1;
     int totalMessageSize = overflow ? (MESSAGE_BUFFER_SIZE + OVERFLOW_SIZE + newlineAdjust) : bufferIndex;
     if (threadIdFlag) {
-      VM.strings.writeThreadId(buffer, totalMessageSize);
+      if (toFile)
+        VM.strings.fwriteThreadId(buffer, totalMessageSize);
+      else
+        VM.strings.writeThreadId(buffer, totalMessageSize);
     } else {
-      VM.strings.write(buffer, totalMessageSize);
+      if (toFile)
+        VM.strings.fwrite(buffer, totalMessageSize);
+      else
+        VM.strings.write(buffer, totalMessageSize);
     }
     threadIdFlag = false;
     overflow = false;

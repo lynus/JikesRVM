@@ -13,13 +13,14 @@
 package org.jikesrvm.mm.mmtk;
 
 import org.jikesrvm.VM;
+import org.jikesrvm.runtime.BootRecord;
 import org.jikesrvm.scheduler.RVMThread;
 import org.jikesrvm.util.Services;
 import org.vmmagic.pragma.*;
 
 @Uninterruptible
 public class Strings extends org.mmtk.vm.Strings {
-
+  private static int logFileDesc = BootRecord.the_boot_record.logFileDesc;
   @Override
   public void write(char [] c, int len) {
     VM.sysWrite(c, len);
@@ -28,6 +29,16 @@ public class Strings extends org.mmtk.vm.Strings {
   @Override
   public void writeThreadId(char [] c, int len) {
     VM.tsysWrite(c, len);
+  }
+
+  @Override
+  public void fwrite(char[] c, int len) {
+    VM.sysFileWrite(logFileDesc, c, len);
+  }
+
+  @Override
+  public void fwriteThreadId(char[] c, int len) {
+    VM.tsysFileWrite(logFileDesc, c, len);
   }
 
   @Override

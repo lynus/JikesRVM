@@ -23,6 +23,16 @@ public class Strings extends org.mmtk.vm.Strings {
   }
 
   @Override
+  public void fwrite(char[] c, int len) {
+
+  }
+
+  @Override
+  public void fwriteThreadId(char[] c, int len) {
+
+  }
+
+  @Override
   public void writeThreadId(char [] c, int len) {
     String x = new String(c, 0, len);
     System.err.print(Thread.currentThread().getId() + " : " + x);

@@ -32,6 +32,8 @@ import org.vmmagic.pragma.Uninterruptible;
    */
   public abstract void writeThreadId(char [] c, int len);
 
+  public abstract void fwrite(char [] c, int len);
+  public abstract void fwriteThreadId(char [] c, int len);
   /**
    * Copies characters from the string into the character array.
    * Thread switching is disabled during this method's execution.
