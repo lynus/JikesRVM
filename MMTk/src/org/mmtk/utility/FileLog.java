@@ -447,9 +447,9 @@ public class FileLog extends Log{
   @Inline
   protected void flushIO(boolean threadIdFlag, char [] buffer, int len) {
     if(threadIdFlag)
-      VM.strings.writeThreadId(buffer, len);
+      VM.strings.fwriteThreadId(buffer, len);
     else
-      VM.strings.write(buffer, len);
+      VM.strings.fwrite(buffer, len);
   }
 
   protected void setThreadIdFlag() {

@@ -23,5 +23,7 @@ JVM_0.1 {
     sysExit;
     JNI_CreateJavaVM;
     logFileDesc;
+    sysWriteBuffer;
+    syswriteBufferIndex;
   local : *;
 };

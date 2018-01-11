@@ -3,6 +3,7 @@ package org.mmtk.policy;
 import org.mmtk.plan.Plan;
 import org.mmtk.plan.TransitiveClosure;
 import org.mmtk.utility.Conversions;
+import org.mmtk.utility.FileLog;
 import org.mmtk.utility.Log;
 import org.mmtk.utility.heap.CountingPageResource;
 import org.mmtk.utility.heap.HeapGrowthManager;
@@ -120,11 +121,11 @@ import org.vmmagic.unboxed.*;
                 addr = addr.plus(8);
             }
             double mean = sum / 512;
-            Log.write(mean, 1);
-            Log.write(',');
+            FileLog.write(mean, 1);
+            FileLog.write(',');
             thre++;
             if (thre % 100 == 0) {
-                Log.flush();
+                FileLog.flush();
             }
         }
 

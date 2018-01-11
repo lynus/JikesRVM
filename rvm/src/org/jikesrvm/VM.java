@@ -773,11 +773,35 @@ public class VM extends Properties {
 
   @NoInline
   public static void fwrite(int fd, char[] value, int len) {
-    sysCall.sysWriteBytes(fd, Magic.objectAsAddress(value), len);
+    int ret;
+    //sysCall.sysWriteBytes(fd, Magic.objectAsAddress(value), len);
+    sysCall.sysResetBuffer();
+    for (int i = 0, n = len; i < n; i++) {
+      ret = sysCall.sysAddCharToBuffer(Services.getArrayNoBarrier(value, i));
+      if (ret == -1) {
+        //write buffer full, flush the buffer then reset and fill the buffer again
+        sysCall.sysFlushWriteBuffer(fd);
+        sysCall.sysResetBuffer();
+        sysCall.sysAddCharToBuffer(Services.getArrayNoBarrier(value, i));
+      }
+    }
+    sysCall.sysFlushWriteBuffer(fd);
   }
   @NoInline
   public static void fwrite(int fd, char[] value, int offset, int len) {
-    sysCall.sysWriteBytes(fd, Magic.objectAsAddress(value).plus(offset), len);
+    //sysCall.sysWriteBytes(fd, Magic.objectAsAddress(value).plus(offset), len);
+    int ret;
+    sysCall.sysResetBuffer();
+    for (int i = offset, n = offset + len; i < n; i++) {
+      ret = sysCall.sysAddCharToBuffer(Services.getArrayNoBarrier(value, i));
+      if (ret == -1) {
+        //write buffer full, flush the buffer then reset and fill the buffer again
+        sysCall.sysFlushWriteBuffer(fd);
+        sysCall.sysResetBuffer();
+        sysCall.sysAddCharToBuffer(Services.getArrayNoBarrier(value, i));
+      }
+    }
+    sysCall.sysFlushWriteBuffer(fd);
   }
   /**
    * Low level print of a <code>char</code>to console.

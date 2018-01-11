@@ -65,4 +65,4 @@ fi
 echo "break sysStartMainThread" >> $TMP_GDB_COMMANDS
 echo "set pagination no" >> $TMP_GDB_COMMANDS
 
-gdb "${gdb_args[@]}" "$RVM_HOME/JikesRVM" "--command=$TMP_GDB_COMMANDS"
+cgdb "${gdb_args[@]}" "$RVM_HOME/JikesRVM" "--command=$TMP_GDB_COMMANDS"

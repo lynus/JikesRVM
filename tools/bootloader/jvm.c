@@ -69,6 +69,10 @@ char *bootDataFilename;
 /** File name for part of boot image containing the root map */
 char *bootRMapFilename;
 int logFileDesc = 0;
+/** Direct buffer used for buffer java char[] array */
+char *sysWriteBuffer = NULL;
+/** buffer pointer */
+int sysWriteBufferIndex = 0;
 
 Extent initialHeapSize;
 Extent maximumHeapSize;
@@ -445,6 +449,9 @@ int createVM(int vmInSeparateThread)
   //bootRecord->logFileDesc == 0 indicate user do not specify a log file name(-X:mutatorWCfile=)
   //In java side, code using log file i/o should be aware of this situation.
   bootRecord->logFileDesc = logFileDesc;
+  if (logFileDesc != 0) {
+    sysWriteBuffer = (char *)checkMalloc(2048);
+  }
   /* write syscall linkage information into boot record */
   setLinkage(bootRecord);
 

@@ -16,6 +16,7 @@ import static org.mmtk.utility.Constants.*;
 import static org.mmtk.vm.VM.EXIT_CODE_REFLECTION_FAILURE;
 
 import org.mmtk.policy.*;
+import org.mmtk.utility.FileLog;
 import org.mmtk.utility.alloc.LinearScan;
 import org.mmtk.utility.Conversions;
 import org.mmtk.utility.HeaderByte;
@@ -226,6 +227,7 @@ public abstract class Plan {
     if (Options.verbose.getValue() > 0) Stats.startAll();
     if (Options.eagerMmapSpaces.getValue()) Space.eagerlyMmapMMTkSpaces();
     pretenureThreshold = (int) ((Options.nurserySize.getMaxNursery() << LOG_BYTES_IN_PAGE) * Options.pretenureThresholdFraction.getValue());
+    FileLog log = new FileLog();
   }
 
   /**

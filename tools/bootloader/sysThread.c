@@ -161,6 +161,7 @@ EXTERNAL void sysExit(int value)
   fflush(SysErrorFile);
   fflush(SysTraceFile);
   fflush(stdout);
+  if (logFileDesc) fdatasync(logFileDesc);
 
   systemExiting = 1;
 

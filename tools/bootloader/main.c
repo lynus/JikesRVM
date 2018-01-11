@@ -425,14 +425,14 @@ static const char ** processCommandLineArguments(JavaVMInitArgs *initArgs, const
       continue;
     }
     if (STRNEQUAL(token, nonStandardArgs[MUTATORWCFILE_INDEX], 17)) {
-        extern int logFileDesc;
         const char *subtoken = (char *)(token + 17);
-        int fd = open(subtoken, O_WRONLY|O_CREAT);
+        int fd = open(subtoken, O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH);
         if(fd == -1) {
             ERROR_PRINTF("can't open WCFile %s : %s\n", subtoken, strerror(errno));
             sysExit(EXIT_STATUS_SYSCALL_TROUBLE);
         }
         logFileDesc = fd;
+	continue;
     }
     //
     // All VM directives that are not handled here but in VM.java

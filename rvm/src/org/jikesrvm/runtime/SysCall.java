@@ -159,6 +159,15 @@ public abstract class SysCall {
   @SysCallTemplate
   public abstract int sysWriteBytes(int fd, Address buf, int cnt);
 
+  @SysCallTemplate
+  public abstract void sysResetBuffer();
+
+  @SysCallTemplate
+  public abstract  int sysAddCharToBuffer(char c);
+
+  @SysCallTemplate
+  public abstract  int sysFlushWriteBuffer(int fd);
+
   // mmap - memory mapping
   @SysCallTemplate
   public abstract Address sysMMap(Address start, Extent length, int protection, int flags, int fd, Offset offset);

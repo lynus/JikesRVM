@@ -20,7 +20,7 @@ import org.vmmagic.pragma.*;
 
 @Uninterruptible
 public class Strings extends org.mmtk.vm.Strings {
-  private static int logFileDesc = BootRecord.the_boot_record.logFileDesc;
+  private static int logFileDesc;
   @Override
   public void write(char [] c, int len) {
     VM.sysWrite(c, len);
@@ -43,6 +43,7 @@ public class Strings extends org.mmtk.vm.Strings {
 
   @Override
   public boolean openFile() {
+    logFileDesc = BootRecord.the_boot_record.logFileDesc;
     if (logFileDesc != 0)
       return true;
     else

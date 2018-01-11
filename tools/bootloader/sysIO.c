@@ -135,3 +135,18 @@ EXTERNAL int sysWriteBytes(int fd, char *buf, int cnt)
     }
   }
 }
+EXTERNAL void sysResetBuffer() {
+  sysWriteBufferIndex = 0;
+}
+
+EXTERNAL int sysAddCharToBuffer(char c) {
+  if (sysWriteBufferIndex >= 2048) {
+    ERROR_PRINTF("%s: sysWriteBuffer overflow.\n", Me);
+    return -1;
+  }
+  sysWriteBuffer[sysWriteBufferIndex++] = c;
+  return 0;
+}
+EXTERNAL int sysFlushWriteBuffer(int fd) {
+  return sysWriteBytes(fd, sysWriteBuffer, sysWriteBufferIndex);
+}

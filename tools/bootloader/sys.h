@@ -93,6 +93,10 @@ extern char *bootDataFilename;
 /** File name for part of boot image containing the root map */
 extern char *bootRMapFilename;
 
+extern int logFileDesc;
+extern char* sysWriteBuffer;
+extern sysWriteBufferIndex;
+
 extern Extent initialHeapSize;
 extern Extent maximumHeapSize;
 extern Extent pageSize;
@@ -179,6 +183,9 @@ EXTERNAL int sysReadByte(int fd);
 EXTERNAL int sysWriteByte(int fd, int data);
 EXTERNAL int sysReadBytes(int fd, char *buf, int cnt);
 EXTERNAL int sysWriteBytes(int fd, char *buf, int cnt);
+EXTERNAL void sysResetBuffer();
+EXTERNAL int sysAddCharToBuffer(char c);
+EXTERNAL int sysFlushWriteBuffer(int fd);
 // sysLibrary
 EXTERNAL void* sysDlopen(char *libname);
 EXTERNAL void* sysDlsym(Address libHandler, char *symbolName);

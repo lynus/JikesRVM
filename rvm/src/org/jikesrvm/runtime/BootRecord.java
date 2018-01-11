@@ -406,5 +406,8 @@ public class BootRecord {
   public Address sysPerfEventDisableIP;
   public Address sysPerfEventReadIP;
 
+  public Address sysResetBufferIP;
+  public Address sysAddCharToBufferIP;
+  public Address sysFlushWriteBufferIP;
   public int logFileDesc;
 }
