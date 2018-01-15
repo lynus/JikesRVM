@@ -174,6 +174,8 @@ public abstract class Plan {
     Options.useShortStackScans = new UseShortStackScans();
     Options.threads = new Threads();
     Options.cycleTriggerThreshold = new CycleTriggerThreshold();
+    Options.gcCountWrite = new GCCountWrite();
+
     HeapLayout.vmMap.finalizeStaticSpaceMap();
     registerSpecializedMethods();
 
@@ -227,7 +229,15 @@ public abstract class Plan {
     if (Options.verbose.getValue() > 0) Stats.startAll();
     if (Options.eagerMmapSpaces.getValue()) Space.eagerlyMmapMMTkSpaces();
     pretenureThreshold = (int) ((Options.nurserySize.getMaxNursery() << LOG_BYTES_IN_PAGE) * Options.pretenureThresholdFraction.getValue());
-    FileLog log = new FileLog();
+    //check if VM's option forceMutatorCountWrite is set
+    if (VM.barriers.doesMutatorCountWrite() && Options.gcCountWrite.getValue()) {
+      Log.writeln("gc and mutator both want count write, I can't do it right now");
+      Log.writeln("disable gc count write.");
+      Options.gcCountWrite.setValue(false);
+    }
+    if (VM.barriers.doesMutatorCountWrite() || Options.gcCountWrite.getValue()) {
+      FileLog log = new FileLog();
+    }
   }
 
   /**
@@ -374,7 +384,11 @@ public abstract class Plan {
       Log.writeln(" ms]");
     }
     if (Options.verboseTiming.getValue()) printDetailedTiming(true);
-    counterSpace.dumpCounts();
+    // something is wrong, then do not dump counterSpace.
+    if (value != 0)
+      return;
+    if (Options.gcCountWrite.getValue() || VM.barriers.doesMutatorCountWrite())
+      counterSpace.dumpCounts();
   }
 
   /**

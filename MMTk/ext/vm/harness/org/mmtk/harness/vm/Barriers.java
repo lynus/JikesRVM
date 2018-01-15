@@ -615,4 +615,9 @@ public class Barriers extends org.mmtk.vm.Barriers {
     dst[index] = value;
   }
 
+  @Override
+  public boolean doesMutatorCountWrite() {
+    return false;
+  }
+
 }

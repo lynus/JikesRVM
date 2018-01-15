@@ -17,6 +17,7 @@ import org.mmtk.plan.markcompact.MC;
 import org.mmtk.utility.Log;
 import org.mmtk.utility.alloc.Allocator;
 import org.mmtk.utility.alloc.BumpPointer;
+import org.mmtk.utility.options.Options;
 import org.mmtk.vm.VM;
 import org.vmmagic.pragma.Inline;
 import org.vmmagic.pragma.Uninterruptible;
@@ -400,7 +401,8 @@ public final class MarkCompactCollector {
       MarkCompactSpace.setForwardingPointer(to, ObjectReference.nullReference());
       if (VM.VERIFY_ASSERTIONS)
         VM.assertions._assert(VM.objectModel.getObjectEndAddress(to).LE(limit));
-      Plan.updateWriteCountRange(savedCursor, cursor);
+      if (Options.gcCountWrite.getValue())
+        Plan.updateWriteCountRange(savedCursor, cursor);
 //      if (from.toAddress().LT(to.toAddress()))
 //        Log.writeln("from is less than to!");
     }
