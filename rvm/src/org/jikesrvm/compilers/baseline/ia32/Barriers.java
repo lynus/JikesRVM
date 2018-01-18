@@ -19,9 +19,11 @@ import static org.jikesrvm.ia32.BaselineConstants.T0;
 import org.jikesrvm.Configuration;
 import org.jikesrvm.classloader.MethodReference;
 import org.jikesrvm.classloader.NormalMethod;
+import org.jikesrvm.compilers.baseline.BaselineCompiler;
 import org.jikesrvm.compilers.common.assembler.ia32.Assembler;
 import org.jikesrvm.ia32.RegisterConstants.GPR;
 import org.jikesrvm.runtime.Entrypoints;
+import org.vmmagic.pragma.Entrypoint;
 import org.vmmagic.pragma.Inline;
 import org.vmmagic.unboxed.Offset;
 
@@ -60,6 +62,11 @@ class Barriers {
     asm.generateJTOCcall(barrier.getOffset());
   }
 
+  private static void arrayStoreCountHelper(Assembler asm, BaselineCompilerImpl compiler, NormalMethod counter) {
+    MethodReference method = counter.getMemberRef().asMethodReference();
+    compiler.genParameterRegisterLoad(method, false);
+    asm.generateJTOCcall(counter.getOffset());
+  }
   /**
    * Generate code to perform a bastore barrier. On entry the stack holds:
    * arrayRef, index, value.
@@ -115,6 +122,9 @@ class Barriers {
     arrayStoreBarrierHelper(asm, compiler, Entrypoints.intArrayWriteBarrierMethod);
   }
 
+  static void compileArrayStoreCountInt(Assembler asm, BaselineCompilerImpl compiler) {
+    arrayStoreCountHelper(asm, compiler, Entrypoints.intArrayWriteCountMethod);
+  }
   /**
    * Generate code to perform a lastore barrier. On entry the stack holds:
    * arrayRef, index, value.

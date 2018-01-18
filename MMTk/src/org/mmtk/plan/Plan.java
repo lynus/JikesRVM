@@ -1110,4 +1110,9 @@ public abstract class Plan {
   public static void updateWriteCountRange(Address start, Address end) {
     counterSpace.updateCounter(start, end);
   }
+
+  @Inline
+  public static void updateWriteCount(Address slot) {
+    counterSpace.updateCounter(slot);
+  }
 }

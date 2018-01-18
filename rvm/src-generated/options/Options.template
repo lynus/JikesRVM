@@ -245,6 +245,7 @@ $$$$ FOREACH OPTION VDATFILE
      $$$$ END SPLIT
 $$$$ END FOREACH
 $$$$ END LOOP
+    VM.sysWriteln();
 
     VM.sysExit(EXIT_STATUS_PRINTED_HELP_MESSAGE);
   }

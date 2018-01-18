@@ -740,7 +740,25 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
       boundsCheckHelper(ONE_SLOT, TWO_SLOTS);
       Barriers.compileArrayStoreBarrierInt(asm, this);
     } else {
+      /* if the method that's being compile is bootstrap class,
+         save the 'ref' and 'index' into used register R8 and R9,
+         after primitiveArrayStoreHelp returns restore 'ref' and 'index' onto stack
+         and call entrypoint method intArrayWriteCount that requires ref and index as parameters. */
+      if (!this.klass.getTypeRef().getName().isBootstrapClassDescriptor()) {
+        VM.sysWriteln(this.klass.getTypeRef().getName());
+        VM.sysWrite(':');
+        VM.sysWriteln(this.method.getMemberRef().getName());
+        asm.emitMOV_Reg_RegDisp(GPR.R9, SP, Offset.fromIntSignExtend(WORDSIZE));  //index => R9
+        asm.emitMOV_Reg_RegDisp_Quad(GPR.R8, SP, Offset.fromIntSignExtend(2 * WORDSIZE));  //ref => R8
+      }
       primitiveArrayStoreHelper(4);
+      if (!this.klass.getTypeRef().getName().isBootstrapClassDescriptor()) {
+        //restore ref and index onto the operand stack
+        asm.emitPUSH_Reg(GPR.R8);
+        asm.emitPUSH_Reg(GPR.R9);
+        Barriers.compileArrayStoreCountInt(asm, this);
+      }
+
     }
   }
 

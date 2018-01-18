@@ -552,6 +552,19 @@ public class Barriers {
       VM._assert(VM.NOT_REACHED);
   }
 
+  @Inline
+  @Entrypoint
+  public static void intArrayWriteCount(int[] ref, int index) {
+    if (VM.forceMutatorCountWrite) {
+      ObjectReference array = ObjectReference.fromObject(ref);
+      Offset offset = Offset.fromIntSignExtend(index << LOG_BYTES_IN_INT);
+//      VM.sysWrite("intArrayWriteCount:get index: ");
+//      VM.sysWriteln(index);
+      VM.sysWrite("intArrayWriteCount ref address: ");
+      VM.sysWriteln(array.toAddress());
+      Selected.Mutator.get().intWriteCount(array.toAddress().plus(offset));
+    }
+  }
   /**
    * Barrier for loads of ints from fields of instances (i.e. getfield).
    *

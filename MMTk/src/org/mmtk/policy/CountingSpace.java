@@ -12,6 +12,7 @@ import org.mmtk.utility.heap.layout.HeapLayout;
 import org.mmtk.utility.heap.layout.Map64;
 import org.mmtk.utility.options.Options;
 import org.mmtk.vm.VM;
+import org.vmmagic.pragma.Inline;
 import org.vmmagic.pragma.Uninterruptible;
 import org.vmmagic.unboxed.*;
 
@@ -82,6 +83,7 @@ import org.vmmagic.unboxed.*;
     }
 
     public void updateCounter(Address start, Address end) {
+        //Right Now updateCounter only called from MCCollector during compact phase, it's should be in range of target heap
         if(VM.VERIFY_ASSERTIONS)
             VM.assertions._assert(isInSpace(Plan.targetSpace.getDescriptor(), start)
                     && isInSpace(Plan.targetSpace.getDescriptor(), end));
@@ -100,7 +102,20 @@ import org.vmmagic.unboxed.*;
             addr = addr.plus(8);
         } while (addr.LT(end));
     }
-
+    @Inline
+    public void updateCounter(Address slot) {
+        if (!isInSpace(Plan.targetSpace.getDescriptor(), slot)) {
+            return;
+        }
+        Log.write("updateCounter: ");
+        Log.writeln(slot);
+        Address base = ((Map64) HeapLayout.vmMap).getSpaceBaseAddress(Plan.targetSpace);
+        slot = slot.toWord().and(Word.fromIntSignExtend(~7)).toAddress();
+        Address addr = this.start.plus(slot.diff(base));
+        long val = addr.loadLong();
+        val++;
+        addr.store(val);
+    }
     public void dumpCounts() {
         if (Options.verbose.getValue() >2) {
             Log.write("Start dumping write counts for space: ");
@@ -120,8 +135,9 @@ import org.vmmagic.unboxed.*;
                 sum = sum + addr.loadLong();
                 addr = addr.plus(8);
             }
-            double mean = sum / 512;
-            FileLog.write(mean, 1);
+//            double mean = sum / 512;
+//            FileLog.write(mean, 1);
+            FileLog.write(sum);
             FileLog.write(',');
             thre++;
             if (thre % 100 == 0) {

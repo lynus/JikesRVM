@@ -20,6 +20,7 @@ import org.mmtk.utility.alloc.Allocator;
 import org.mmtk.utility.alloc.BumpPointer;
 import org.mmtk.utility.Log;
 
+import org.mmtk.utility.options.Options;
 import org.mmtk.vm.VM;
 
 import org.vmmagic.pragma.*;
@@ -538,6 +539,11 @@ public abstract class MutatorContext {
     // Either: write barriers are used and this is overridden, or
     // write barriers are not used and this is never called
     if (VM.VERIFY_ASSERTIONS) VM.assertions._assert(false);
+  }
+
+  public void intWriteCount(Address slot) {
+    if (VM.VERIFY_ASSERTIONS) VM.assertions._assert(!Options.gcCountWrite.getValue());
+    Plan.updateWriteCount(slot);
   }
 
   /**
