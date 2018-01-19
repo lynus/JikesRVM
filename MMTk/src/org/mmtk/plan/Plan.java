@@ -237,7 +237,16 @@ public abstract class Plan {
     }
     if (VM.barriers.doesMutatorCountWrite() || Options.gcCountWrite.getValue()) {
       FileLog log = new FileLog();
+      counterSpace.setLimit(HeapGrowthManager.getMaxHeapSize());
+      counterSpace.populateCounters(totalMemory());
+      targetSpace = counterSpace.getTargetSpace();
+      if (Options.verbose.getValue() > 2) {
+        Log.write("get target space: ");
+        Log.writeln(targetSpace.getName());
+      }
     }
+
+
   }
 
   /**
@@ -246,12 +255,6 @@ public abstract class Plan {
    */
   @Interruptible
   public void enableCollection() {
-    counterSpace.setLimit(HeapGrowthManager.getMaxHeapSize());
-    counterSpace.populateCounters(totalMemory());
-    targetSpace = counterSpace.getTargetSpace();
-    Log.write("get target space: ");
-    Log.writeln(targetSpace.getName());
-
     int actualThreadCount = determineThreadCount();
 
     if (VM.VERIFY_ASSERTIONS) {

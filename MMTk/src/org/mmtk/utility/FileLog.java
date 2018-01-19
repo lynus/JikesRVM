@@ -14,6 +14,7 @@ package org.mmtk.utility;
 
 import static org.mmtk.utility.Constants.*;
 
+import org.mmtk.utility.options.Options;
 import org.mmtk.vm.VM;
 
 import org.vmmagic.unboxed.*;
@@ -52,10 +53,10 @@ public class FileLog extends Log{
       buffer[MESSAGE_BUFFER_SIZE + i] = OVERFLOW_MESSAGE.charAt(i);
     }
     if (VM.strings.openFile()) {
-      Log.writeln("FileLog open success.");
+      if (Options.verbose.getValue() > 2) Log.writeln("FileLog open success.");
       log = this;
     } else {
-      Log.writeln("Filelog open failed, fall back to Log");
+      if (Options.verbose.getValue() > 2) Log.writeln("Filelog open failed, fall back to Log");
       log = new Log();
     }
   }

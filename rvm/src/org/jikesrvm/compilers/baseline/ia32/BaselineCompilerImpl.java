@@ -66,13 +66,9 @@ import static org.jikesrvm.objectmodel.TIBLayoutConstants.NEEDS_DYNAMIC_LINK;
 import static org.jikesrvm.objectmodel.TIBLayoutConstants.TIB_DOES_IMPLEMENT_INDEX;
 import static org.jikesrvm.objectmodel.TIBLayoutConstants.TIB_INTERFACE_DISPATCH_TABLE_INDEX;
 import static org.jikesrvm.objectmodel.TIBLayoutConstants.TIB_SUPERCLASS_IDS_INDEX;
-import static org.jikesrvm.runtime.JavaSizeConstants.BYTES_IN_BYTE;
-import static org.jikesrvm.runtime.JavaSizeConstants.BYTES_IN_INT;
-import static org.jikesrvm.runtime.JavaSizeConstants.BYTES_IN_LONG;
-import static org.jikesrvm.runtime.JavaSizeConstants.BYTES_IN_SHORT;
-import static org.jikesrvm.runtime.JavaSizeConstants.LOG_BYTES_IN_INT;
-import static org.jikesrvm.runtime.JavaSizeConstants.LOG_BYTES_IN_SHORT;
+import static org.jikesrvm.runtime.JavaSizeConstants.*;
 import static org.jikesrvm.runtime.RuntimeEntrypoints.TRAP_UNREACHABLE_BYTECODE;
+import static org.jikesrvm.runtime.UnboxedSizeConstants.LOG_BYTES_IN_ADDRESS;
 
 import org.jikesrvm.VM;
 import org.jikesrvm.adaptive.AosEntrypoints;
@@ -105,6 +101,7 @@ import org.jikesrvm.ia32.RegisterConstants.XMM;
 import org.jikesrvm.jni.ia32.JNICompiler;
 import org.jikesrvm.mm.mminterface.MemoryManager;
 import org.jikesrvm.objectmodel.ObjectModel;
+import org.jikesrvm.osr.ppc.BaselineExecutionStateExtractor;
 import org.jikesrvm.runtime.ArchEntrypoints;
 import org.jikesrvm.runtime.Entrypoints;
 import org.jikesrvm.runtime.Magic;
@@ -746,9 +743,9 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
          after primitiveArrayStoreHelp returns restore 'ref' and 'index' onto stack
          and call entrypoint method intArrayWriteCount that requires ref and index as parameters. */
       if (notBootStrap()) {
-        VM.sysWrite(this.klass.getTypeRef().getName());
-        VM.sysWrite(':');
-        VM.sysWriteln(this.method.getMemberRef().getName());
+//        VM.sysWrite(this.klass.getTypeRef().getName());
+//        VM.sysWrite(':');
+//        VM.sysWriteln(this.method.getMemberRef().getName());
         asm.emitMOV_Reg_RegDisp(GPR.R9, SP, Offset.fromIntSignExtend(WORDSIZE));  //index => R9
         asm.emitMOV_Reg_RegDisp_Quad(GPR.R8, SP, Offset.fromIntSignExtend(2 * WORDSIZE));  //ref => R8
       }
@@ -771,7 +768,17 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
       boundsCheckHelper(ONE_SLOT, TWO_SLOTS);
       Barriers.compileArrayStoreBarrierFloat(asm, this);
     } else {
+      if (notBootStrap()) {
+        asm.emitMOV_Reg_RegDisp(GPR.R9, SP, Offset.fromIntSignExtend(WORDSIZE));
+        asm.emitMOV_Reg_RegDisp_Quad(GPR.R8, SP, Offset.fromIntSignExtend(2 * WORDSIZE));
+      }
       primitiveArrayStoreHelper(4);
+      if (notBootStrap()) {
+        asm.emitPUSH_Reg(GPR.R8);
+        asm.emitPUSH_Reg(GPR.R9);
+        asm.emitPUSH_Imm(LOG_BYTES_IN_FLOAT);
+        Barriers.compileArrayStoreCount(asm, this);
+      }
     }
   }
 
@@ -779,12 +786,22 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
   @Override
   protected void emit_aastore() {
     Barriers.compileModifyCheck(asm, 2 * WORDSIZE);
+    if (notBootStrap()) {
+      asm.emitMOV_Reg_RegDisp(GPR.R9, SP, Offset.fromIntSignExtend(WORDSIZE));
+      asm.emitMOV_Reg_RegDisp_Quad(GPR.R8, SP, Offset.fromIntSignExtend(2 * WORDSIZE));
+    }
     if (doesCheckStore) {
       genParameterRegisterLoad(asm, 3);
       asm.generateJTOCcall(Entrypoints.aastoreMethod.getOffset());
     } else {
       genParameterRegisterLoad(asm, 3);
       asm.generateJTOCcall(Entrypoints.aastoreUninterruptibleMethod.getOffset());
+    }
+    if (notBootStrap()) {
+      asm.emitPUSH_Reg(GPR.R8);
+      asm.emitPUSH_Reg(GPR.R9);
+      asm.emitPUSH_Imm(LOG_BYTES_IN_ADDRESS);
+      Barriers.compileArrayStoreCount(asm, this);
     }
   }
 
@@ -795,7 +812,17 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
       boundsCheckHelper(ONE_SLOT, TWO_SLOTS);
       Barriers.compileArrayStoreBarrierChar(asm, this);
     } else {
+      if (notBootStrap()) {
+        asm.emitMOV_Reg_RegDisp(GPR.R9, SP, Offset.fromIntSignExtend(WORDSIZE));
+        asm.emitMOV_Reg_RegDisp_Quad(GPR.R8, SP, Offset.fromIntSignExtend(2 * WORDSIZE));
+      }
       primitiveArrayStoreHelper(2);
+      if (notBootStrap()) {
+        asm.emitPUSH_Reg(GPR.R8);
+        asm.emitPUSH_Reg(GPR.R9);
+        asm.emitPUSH_Imm(LOG_BYTES_IN_CHAR);
+        Barriers.compileArrayStoreCount(asm, this);
+      }
     }
   }
 
@@ -806,7 +833,17 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
       boundsCheckHelper(ONE_SLOT, TWO_SLOTS);
       Barriers.compileArrayStoreBarrierShort(asm, this);
     } else {
+      if (notBootStrap()) {
+        asm.emitMOV_Reg_RegDisp(GPR.R9, SP, Offset.fromIntSignExtend(WORDSIZE));
+        asm.emitMOV_Reg_RegDisp_Quad(GPR.R8, SP, Offset.fromIntSignExtend(2 * WORDSIZE));
+      }
       primitiveArrayStoreHelper(2);
+      if (notBootStrap()) {
+        asm.emitPUSH_Reg(GPR.R8);
+        asm.emitPUSH_Reg(GPR.R9);
+        asm.emitPUSH_Imm(LOG_BYTES_IN_CHAR);
+        Barriers.compileArrayStoreCount(asm, this);
+      }
     }
   }
 
@@ -817,7 +854,17 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
       boundsCheckHelper(ONE_SLOT, TWO_SLOTS);
       Barriers.compileArrayStoreBarrierByte(asm, this);
     } else {
+      if (notBootStrap()) {
+        asm.emitMOV_Reg_RegDisp(GPR.R9, SP, Offset.fromIntSignExtend(WORDSIZE));
+        asm.emitMOV_Reg_RegDisp_Quad(GPR.R8, SP, Offset.fromIntSignExtend(2 * WORDSIZE));
+      }
       primitiveArrayStoreHelper(1);
+      if (notBootStrap()) {
+        asm.emitPUSH_Reg(GPR.R8);
+        asm.emitPUSH_Reg(GPR.R9);
+        asm.emitPUSH_Imm(LOG_BYTES_IN_BYTE);
+        Barriers.compileArrayStoreCount(asm, this);
+      }
     }
   }
 
@@ -828,7 +875,17 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
       boundsCheckHelper(TWO_SLOTS, THREE_SLOTS);
       Barriers.compileArrayStoreBarrierLong(asm, this);
     } else {
+      if (notBootStrap()) {
+        asm.emitMOV_Reg_RegDisp(GPR.R9, SP, Offset.fromIntSignExtend(2 * WORDSIZE));
+        asm.emitMOV_Reg_RegDisp_Quad(GPR.R8, SP, Offset.fromIntSignExtend(3 * WORDSIZE));
+      }
       primitiveArrayStoreHelper(8);
+      if (notBootStrap()) {
+        asm.emitPUSH_Reg(GPR.R8);
+        asm.emitPUSH_Reg(GPR.R9);
+        asm.emitPUSH_Imm(LOG_BYTES_IN_CHAR);
+        Barriers.compileArrayStoreCount(asm, this);
+      }
     }
   }
 
@@ -839,7 +896,17 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
       boundsCheckHelper(TWO_SLOTS, THREE_SLOTS);
       Barriers.compileArrayStoreBarrierDouble(asm, this);
     } else {
+      if (notBootStrap()) {
+        asm.emitMOV_Reg_RegDisp(GPR.R9, SP, Offset.fromIntSignExtend(2 * WORDSIZE));
+        asm.emitMOV_Reg_RegDisp_Quad(GPR.R8, SP, Offset.fromIntSignExtend(3 * WORDSIZE));
+      }
       primitiveArrayStoreHelper(8);
+      if (notBootStrap()) {
+        asm.emitPUSH_Reg(GPR.R8);
+        asm.emitPUSH_Reg(GPR.R9);
+        asm.emitPUSH_Imm(LOG_BYTES_IN_CHAR);
+        Barriers.compileArrayStoreCount(asm, this);
+      }
     }
   }
 
