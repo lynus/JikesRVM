@@ -123,7 +123,8 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
 
   private final Assembler asm;
   private final Lister lister;
-
+  // -1 not decide, 0 the method's class is not bootstrap class, 1 the class is bootstrap
+  private int bootStrapFlag = -1;
   static {
     // Force resolution of BaselineMagic before using in genMagic
     Object x = BaselineMagic.generateMagic(null, null, null, Offset.zero());
@@ -744,15 +745,15 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
          save the 'ref' and 'index' into used register R8 and R9,
          after primitiveArrayStoreHelp returns restore 'ref' and 'index' onto stack
          and call entrypoint method intArrayWriteCount that requires ref and index as parameters. */
-      if (!this.klass.getTypeRef().getName().isBootstrapClassDescriptor()) {
-        VM.sysWriteln(this.klass.getTypeRef().getName());
+      if (notBootStrap()) {
+        VM.sysWrite(this.klass.getTypeRef().getName());
         VM.sysWrite(':');
         VM.sysWriteln(this.method.getMemberRef().getName());
         asm.emitMOV_Reg_RegDisp(GPR.R9, SP, Offset.fromIntSignExtend(WORDSIZE));  //index => R9
         asm.emitMOV_Reg_RegDisp_Quad(GPR.R8, SP, Offset.fromIntSignExtend(2 * WORDSIZE));  //ref => R8
       }
       primitiveArrayStoreHelper(4);
-      if (!this.klass.getTypeRef().getName().isBootstrapClassDescriptor()) {
+      if (notBootStrap()) {
         //restore ref and index onto the operand stack
         asm.emitPUSH_Reg(GPR.R8);
         asm.emitPUSH_Reg(GPR.R9);
@@ -4570,5 +4571,17 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
     asm.noteEndOfBytecodes();
   }
 
+  private boolean notBootStrap() {
+    if (bootStrapFlag == 1) return false;
+    if (bootStrapFlag == 0) return true;
+    if (!this.klass.getTypeRef().getName().isBootstrapClassDescriptor()) {
+      bootStrapFlag = 0;
+      return true;
+    }
+    else {
+      bootStrapFlag = 1;
+      return false;
+    }
+  }
 }
 
