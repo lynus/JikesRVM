@@ -122,8 +122,8 @@ class Barriers {
     arrayStoreBarrierHelper(asm, compiler, Entrypoints.intArrayWriteBarrierMethod);
   }
 
-  static void compileArrayStoreCountInt(Assembler asm, BaselineCompilerImpl compiler) {
-    arrayStoreCountHelper(asm, compiler, Entrypoints.intArrayWriteCountMethod);
+  static void compileArrayStoreCount(Assembler asm, BaselineCompilerImpl compiler) {
+    arrayStoreCountHelper(asm, compiler, Entrypoints.ArrayWriteCountMethod);
   }
   /**
    * Generate code to perform a lastore barrier. On entry the stack holds:

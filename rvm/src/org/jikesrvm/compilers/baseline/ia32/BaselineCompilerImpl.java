@@ -757,7 +757,8 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
         //restore ref and index onto the operand stack
         asm.emitPUSH_Reg(GPR.R8);
         asm.emitPUSH_Reg(GPR.R9);
-        Barriers.compileArrayStoreCountInt(asm, this);
+        asm.emitPUSH_Imm(LOG_BYTES_IN_INT);
+        Barriers.compileArrayStoreCount(asm, this);
       }
 
     }

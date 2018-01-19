@@ -554,10 +554,10 @@ public class Barriers {
 
   @Inline
   @Entrypoint
-  public static void intArrayWriteCount(int[] ref, int index) {
+  public static void ArrayWriteCount(int[] ref, int index, int logsize) {
     if (VM.forceMutatorCountWrite) {
       ObjectReference array = ObjectReference.fromObject(ref);
-      Offset offset = Offset.fromIntSignExtend(index << LOG_BYTES_IN_INT);
+      Offset offset = Offset.fromIntSignExtend(index << logsize);
 //      VM.sysWrite("intArrayWriteCount:get index: ");
 //      VM.sysWriteln(index);
       VM.sysWrite("intArrayWriteCount ref address: ");
