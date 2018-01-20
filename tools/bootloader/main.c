@@ -80,9 +80,9 @@ Extent determinePageSize();
 #define BOOTCLASSPATH_A_INDEX         BOOTCLASSPATH_P_INDEX + 1
 #define PROCESSORS_INDEX              BOOTCLASSPATH_A_INDEX + 1
 #define VERBOSE_SIGNAL_HANDLING       PROCESSORS_INDEX + 1
-#define MUTATORWCFILE_INDEX                 VERBOSE_SIGNAL_HANDLING +1
+#define LOGFILE_INDEX                 VERBOSE_SIGNAL_HANDLING +1
 
-#define numNonstandardArgs      MUTATORWCFILE_INDEX + 1
+#define numNonstandardArgs      LOGFILE_INDEX + 1
 
 static const char* nonStandardArgs[numNonstandardArgs] = {
   "-X",
@@ -106,7 +106,7 @@ static const char* nonStandardArgs[numNonstandardArgs] = {
   "-Xbootclasspath/a:",
   "-X:availableProcessors=",
   "-X:verboseSignalHandling",
-  "-X:mutatorWCfile=",
+  "-X:logFile=",
 };
 
 // a NULL-terminated list.
@@ -117,6 +117,7 @@ static const char* nonStandardUsage[] = {
   "  -Xms<number><unit>         Initial size of heap",
   "  -Xmx<number><unit>         Maximum size of heap",
   "  -X:sysLogfile=<filename>   Write standard error message to <filename>",
+  "  -X:logFile=<filename>      FileLog's message writes to <filename>",
   "  -X:ic=<filename>           Read boot image code from <filename>",
   "  -X:id=<filename>           Read boot image data from <filename>",
   "  -X:ir=<filename>           Read boot image ref map from <filename>",
@@ -424,11 +425,11 @@ static const char ** processCommandLineArguments(JavaVMInitArgs *initArgs, const
       bootRMapFilename = (char *)(token + 6);
       continue;
     }
-    if (STRNEQUAL(token, nonStandardArgs[MUTATORWCFILE_INDEX], 17)) {
-        const char *subtoken = (char *)(token + 17);
+    if (STRNEQUAL(token, nonStandardArgs[LOGFILE_INDEX], 11)) {
+        const char *subtoken = (char *)(token + 11);
         int fd = open(subtoken, O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH);
         if(fd == -1) {
-            ERROR_PRINTF("can't open WCFile %s : %s\n", subtoken, strerror(errno));
+            ERROR_PRINTF("can't open log file %s : %s\n", subtoken, strerror(errno));
             sysExit(EXIT_STATUS_SYSCALL_TROUBLE);
         }
         logFileDesc = fd;
