@@ -775,6 +775,8 @@ public final class Atom {
   private static final byte[][] RVM_CLASS_PREFIXES =
       {"Lorg/jikesrvm/".getBytes(), "Lorg/vmmagic/".getBytes(), "Lorg/mmtk/".getBytes()};
 
+  private static final byte[][] EXTRA_BLACKLIST_WRITECOUNT_PREFIX_SET =
+      {"Lorg/vmutil/options/".getBytes()};
   /**
    * @return true if this is a class descriptor of a bootstrap class
    * (ie a class that must be loaded by the bootstrap class loader)
@@ -804,6 +806,22 @@ public final class Atom {
     return false;
   }
 
+  @Pure
+  public boolean isBlockedForWriteCount() {
+    if (isBootstrapClassDescriptor())
+      return true;
+    bootstrap_outer:
+    for (final byte[] test : EXTRA_BLACKLIST_WRITECOUNT_PREFIX_SET) {
+      if (test.length > val.length) continue;
+      for (int j = 0; j < test.length; j++) {
+        if (val[j] != test[j]) {
+          continue bootstrap_outer;
+        }
+      }
+      return true;
+    }
+    return false;
+  }
   /**
    * @return {@code true} if this is a class descriptor of a RVM core class.
    * This is  defined as one that it would be unwise to invalidate, since invalidating

@@ -107,6 +107,10 @@ import org.vmmagic.unboxed.*;
         if (!isInSpace(Plan.targetSpace.getDescriptor(), slot)) {
             return;
         }
+        if (Options.verbose.getValue() > 2) {
+            Log.write("updateCounter slot:");
+            Log.writeln(slot);
+        }
         Address base = ((Map64) HeapLayout.vmMap).getSpaceBaseAddress(Plan.targetSpace);
         slot = slot.toWord().and(Word.fromIntSignExtend(~7)).toAddress();
         Address addr = this.start.plus(slot.diff(base));

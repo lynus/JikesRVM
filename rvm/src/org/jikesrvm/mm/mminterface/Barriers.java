@@ -554,7 +554,7 @@ public class Barriers {
 
   @Inline
   @Entrypoint
-  public static void ArrayWriteCount(int[] ref, int index, int logsize) {
+  public static void arrayWriteCount(int[] ref, int index, int logsize) {
     if (VM.forceMutatorCountWrite) {
       ObjectReference array = ObjectReference.fromObject(ref);
       Offset offset = Offset.fromIntSignExtend(index << logsize);
@@ -566,6 +566,15 @@ public class Barriers {
       VM.sysWrite(" , logsize: ");
       VM.sysWriteln(logsize);  */
       Selected.Mutator.get().intWriteCount(array.toAddress().plus(offset));
+    }
+  }
+
+  @Inline
+  @Entrypoint
+  public static void fieldWriteCount(Object ref, int offset) {
+    if (VM.forceMutatorCountWrite) {
+      ObjectReference obj = ObjectReference.fromObject(ref);
+      Selected.Mutator.get().intWriteCount(obj.toAddress().plus(offset));
     }
   }
   /**

@@ -29,7 +29,7 @@ import org.jikesrvm.mm.mminterface.MemoryManager;
 import org.jikesrvm.scheduler.RVMThread;
 
 /**
- * Command line option processing iwth arbitrary prefix support.
+ * Command line option processing with arbitrary prefix support.
  */
 public class CommandLineArgs {
   private static final boolean DEBUG = false;

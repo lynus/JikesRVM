@@ -101,7 +101,6 @@ import org.jikesrvm.ia32.RegisterConstants.XMM;
 import org.jikesrvm.jni.ia32.JNICompiler;
 import org.jikesrvm.mm.mminterface.MemoryManager;
 import org.jikesrvm.objectmodel.ObjectModel;
-import org.jikesrvm.osr.ppc.BaselineExecutionStateExtractor;
 import org.jikesrvm.runtime.ArchEntrypoints;
 import org.jikesrvm.runtime.Entrypoints;
 import org.jikesrvm.runtime.Magic;
@@ -742,7 +741,7 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
          save the 'ref' and 'index' into used register R8 and R9,
          after primitiveArrayStoreHelp returns restore 'ref' and 'index' onto stack
          and call entrypoint method intArrayWriteCount that requires ref and index as parameters. */
-      if (notBootStrap()) {
+      if (notBlockForWriteCount()) {
 //        VM.sysWrite(this.klass.getTypeRef().getName());
 //        VM.sysWrite(':');
 //        VM.sysWriteln(this.method.getMemberRef().getName());
@@ -750,7 +749,7 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
         asm.emitMOV_Reg_RegDisp_Quad(GPR.R8, SP, Offset.fromIntSignExtend(2 * WORDSIZE));  //ref => R8
       }
       primitiveArrayStoreHelper(4);
-      if (notBootStrap()) {
+      if (notBlockForWriteCount()) {
         //restore ref and index onto the operand stack
         asm.emitPUSH_Reg(GPR.R8);
         asm.emitPUSH_Reg(GPR.R9);
@@ -768,12 +767,12 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
       boundsCheckHelper(ONE_SLOT, TWO_SLOTS);
       Barriers.compileArrayStoreBarrierFloat(asm, this);
     } else {
-      if (notBootStrap()) {
+      if (notBlockForWriteCount()) {
         asm.emitMOV_Reg_RegDisp(GPR.R9, SP, Offset.fromIntSignExtend(WORDSIZE));
         asm.emitMOV_Reg_RegDisp_Quad(GPR.R8, SP, Offset.fromIntSignExtend(2 * WORDSIZE));
       }
       primitiveArrayStoreHelper(4);
-      if (notBootStrap()) {
+      if (notBlockForWriteCount()) {
         asm.emitPUSH_Reg(GPR.R8);
         asm.emitPUSH_Reg(GPR.R9);
         asm.emitPUSH_Imm(LOG_BYTES_IN_FLOAT);
@@ -786,7 +785,7 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
   @Override
   protected void emit_aastore() {
     Barriers.compileModifyCheck(asm, 2 * WORDSIZE);
-    if (notBootStrap()) {
+    if (notBlockForWriteCount()) {
       asm.emitMOV_Reg_RegDisp(GPR.R9, SP, Offset.fromIntSignExtend(WORDSIZE));
       asm.emitMOV_Reg_RegDisp_Quad(GPR.R8, SP, Offset.fromIntSignExtend(2 * WORDSIZE));
     }
@@ -797,7 +796,7 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
       genParameterRegisterLoad(asm, 3);
       asm.generateJTOCcall(Entrypoints.aastoreUninterruptibleMethod.getOffset());
     }
-    if (notBootStrap()) {
+    if (notBlockForWriteCount()) {
       asm.emitPUSH_Reg(GPR.R8);
       asm.emitPUSH_Reg(GPR.R9);
       asm.emitPUSH_Imm(LOG_BYTES_IN_ADDRESS);
@@ -812,12 +811,12 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
       boundsCheckHelper(ONE_SLOT, TWO_SLOTS);
       Barriers.compileArrayStoreBarrierChar(asm, this);
     } else {
-      if (notBootStrap()) {
+      if (notBlockForWriteCount()) {
         asm.emitMOV_Reg_RegDisp(GPR.R9, SP, Offset.fromIntSignExtend(WORDSIZE));
         asm.emitMOV_Reg_RegDisp_Quad(GPR.R8, SP, Offset.fromIntSignExtend(2 * WORDSIZE));
       }
       primitiveArrayStoreHelper(2);
-      if (notBootStrap()) {
+      if (notBlockForWriteCount()) {
         asm.emitPUSH_Reg(GPR.R8);
         asm.emitPUSH_Reg(GPR.R9);
         asm.emitPUSH_Imm(LOG_BYTES_IN_CHAR);
@@ -833,12 +832,12 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
       boundsCheckHelper(ONE_SLOT, TWO_SLOTS);
       Barriers.compileArrayStoreBarrierShort(asm, this);
     } else {
-      if (notBootStrap()) {
+      if (notBlockForWriteCount()) {
         asm.emitMOV_Reg_RegDisp(GPR.R9, SP, Offset.fromIntSignExtend(WORDSIZE));
         asm.emitMOV_Reg_RegDisp_Quad(GPR.R8, SP, Offset.fromIntSignExtend(2 * WORDSIZE));
       }
       primitiveArrayStoreHelper(2);
-      if (notBootStrap()) {
+      if (notBlockForWriteCount()) {
         asm.emitPUSH_Reg(GPR.R8);
         asm.emitPUSH_Reg(GPR.R9);
         asm.emitPUSH_Imm(LOG_BYTES_IN_CHAR);
@@ -854,12 +853,12 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
       boundsCheckHelper(ONE_SLOT, TWO_SLOTS);
       Barriers.compileArrayStoreBarrierByte(asm, this);
     } else {
-      if (notBootStrap()) {
+      if (notBlockForWriteCount()) {
         asm.emitMOV_Reg_RegDisp(GPR.R9, SP, Offset.fromIntSignExtend(WORDSIZE));
         asm.emitMOV_Reg_RegDisp_Quad(GPR.R8, SP, Offset.fromIntSignExtend(2 * WORDSIZE));
       }
       primitiveArrayStoreHelper(1);
-      if (notBootStrap()) {
+      if (notBlockForWriteCount()) {
         asm.emitPUSH_Reg(GPR.R8);
         asm.emitPUSH_Reg(GPR.R9);
         asm.emitPUSH_Imm(LOG_BYTES_IN_BYTE);
@@ -875,12 +874,12 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
       boundsCheckHelper(TWO_SLOTS, THREE_SLOTS);
       Barriers.compileArrayStoreBarrierLong(asm, this);
     } else {
-      if (notBootStrap()) {
+      if (notBlockForWriteCount()) {
         asm.emitMOV_Reg_RegDisp(GPR.R9, SP, Offset.fromIntSignExtend(2 * WORDSIZE));
         asm.emitMOV_Reg_RegDisp_Quad(GPR.R8, SP, Offset.fromIntSignExtend(3 * WORDSIZE));
       }
       primitiveArrayStoreHelper(8);
-      if (notBootStrap()) {
+      if (notBlockForWriteCount()) {
         asm.emitPUSH_Reg(GPR.R8);
         asm.emitPUSH_Reg(GPR.R9);
         asm.emitPUSH_Imm(LOG_BYTES_IN_CHAR);
@@ -896,12 +895,12 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
       boundsCheckHelper(TWO_SLOTS, THREE_SLOTS);
       Barriers.compileArrayStoreBarrierDouble(asm, this);
     } else {
-      if (notBootStrap()) {
+      if (notBlockForWriteCount()) {
         asm.emitMOV_Reg_RegDisp(GPR.R9, SP, Offset.fromIntSignExtend(2 * WORDSIZE));
         asm.emitMOV_Reg_RegDisp_Quad(GPR.R8, SP, Offset.fromIntSignExtend(3 * WORDSIZE));
       }
       primitiveArrayStoreHelper(8);
-      if (notBootStrap()) {
+      if (notBlockForWriteCount()) {
         asm.emitPUSH_Reg(GPR.R8);
         asm.emitPUSH_Reg(GPR.R9);
         asm.emitPUSH_Imm(LOG_BYTES_IN_CHAR);
@@ -2804,6 +2803,13 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
     Barriers.compileModifyCheck(asm, fieldRef.getNumberOfStackSlots() * WORDSIZE);
     TypeReference fieldType = fieldRef.getFieldContentsType();
     emitDynamicLinkingSequence(asm, T0, fieldRef, true);
+    if (notBlockForWriteCount()) {
+      asm.emitMOV_Reg_Reg(GPR.R9, T0);  //R9 <= offset of objref
+      if (fieldType.isLongType() || fieldType.isDoubleType())
+        asm.emitMOV_Reg_RegDisp_Quad(GPR.R8, SP, Offset.fromIntSignExtend(16));
+      else
+        asm.emitMOV_Reg_RegDisp_Quad(GPR.R8, SP, Offset.fromIntSignExtend(8));
+    }
     if (fieldType.isReferenceType()) {
       // 32/64bit reference store
       if (NEEDS_OBJECT_PUTFIELD_BARRIER) {
@@ -2890,6 +2896,11 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
     }
     // The field may be volatile.
     asm.emitMFENCE();
+    if (notBlockForWriteCount()) {
+      asm.emitPUSH_Reg(GPR.R8);
+      asm.emitPUSH_Reg(GPR.R9);
+      Barriers.compileFieldStoreCount(asm, this);
+    }
   }
 
   @Override
@@ -2898,6 +2909,13 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
     RVMField field = fieldRef.peekResolvedField();
     TypeReference fieldType = fieldRef.getFieldContentsType();
     Offset fieldOffset = field.getOffset();
+    if (notBlockForWriteCount()) {
+      asm.emitMOV_Reg_Imm(GPR.R9, fieldOffset.toInt());  //R9 <= offset of objref
+      if (fieldType.isLongType() || fieldType.isDoubleType())  // long and double occupy two WORDSIZE
+        asm.emitMOV_Reg_RegDisp_Quad(GPR.R8, SP, Offset.fromIntSignExtend(16));
+      else
+        asm.emitMOV_Reg_RegDisp_Quad(GPR.R8, SP, Offset.fromIntSignExtend(8));
+    }
     if (field.isReferenceType()) {
       // 32/64bit reference store
       if (NEEDS_OBJECT_PUTFIELD_BARRIER && !field.isUntraced()) {
@@ -2982,6 +3000,11 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
     }
     if (field.isVolatile()) {
       asm.emitMFENCE();
+    }
+    if (notBlockForWriteCount()) {
+      asm.emitPUSH_Reg(GPR.R8);
+      asm.emitPUSH_Reg(GPR.R9);
+      Barriers.compileFieldStoreCount(asm, this);
     }
   }
 
@@ -4639,10 +4662,10 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
     asm.noteEndOfBytecodes();
   }
 
-  private boolean notBootStrap() {
+  private boolean notBlockForWriteCount() {
     if (bootStrapFlag == 1) return false;
     if (bootStrapFlag == 0) return true;
-    if (!this.klass.getTypeRef().getName().isBootstrapClassDescriptor()) {
+    if (!this.klass.getTypeRef().getName().isBlockedForWriteCount()) {
       bootStrapFlag = 0;
       return true;
     }
