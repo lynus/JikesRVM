@@ -107,7 +107,7 @@ import org.vmmagic.unboxed.*;
         if (!isInSpace(Plan.targetSpace.getDescriptor(), slot)) {
             return;
         }
-        if (Options.verbose.getValue() > 2) {
+        if (Options.verbose.getValue() > 4) {
             Log.write("updateCounter slot:");
             Log.writeln(slot);
         }
