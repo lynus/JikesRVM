@@ -46,6 +46,8 @@ import org.vmmagic.unboxed.*;
         if (pr.getNewPages(pages, pages, true).isZero())
             return false;
         this.length = len;
+        if(Options.verbose.getValue() > 1)
+            Log.writeln("Counting space initial length: ", length);
         return true;
     }
 
@@ -61,13 +63,30 @@ import org.vmmagic.unboxed.*;
             if (pr.getNewPages(pages, pages, true).isZero())
                 VM.assertions.fail("Counting Space grow fail!");
             length = currentHeap;
-            if (Options.verbose.getValue() > 2) {
+            if (Options.verbose.getValue() > 1) {
                 Log.write("Counter space grows to ");
                 Log.write(length.toLong() >> 20);
-                Log.writeln(" MB");
+                Log.write(" MB");
+                Log.write((length.toLong() >>> 10) & ((1 << 10)-1));
+                Log.writeln(" KB");
             }
 
         }
+    }
+
+    public void grow(Address addr, Extent bytes) {
+        Address base = ((Map64) HeapLayout.vmMap).getSpaceBaseAddress(Plan.targetSpace);
+        Extent newleng = addr.plus(bytes).diff(base).toWord().toExtent();
+        if (newleng.GT(length)) {
+            int pages = Conversions.bytesToPagesUp(newleng.minus(length));
+            pr.getNewPages(pages, pages, true);
+            length = newleng;
+            if (Options.verbose.getValue() > 3) {
+                Log.write("Counter space grows to ");
+                Log.writeln(start.plus(newleng));
+            }
+        }
+
     }
 
     public static Space getTargetSpace() {
@@ -76,6 +95,9 @@ import org.vmmagic.unboxed.*;
             name = sp.getName();
             if (name != "boot" && name != "immortal" && name != "meta" && name != "los" && name != "sanity" && name != "non-moving"
                     && name != "sm-code" && name != "lg-code" && name != "vm" && name != "write-counter") {
+                if (Options.verbose.getValue() > 1) {
+                    Log.writeln("target space base address: ",((Map64) HeapLayout.vmMap).getSpaceBaseAddress(sp) );
+                }
                 return sp;
             }
         }
@@ -104,6 +126,10 @@ import org.vmmagic.unboxed.*;
     }
     @Inline
     public void updateCounter(Address slot) {
+        if (slot.isZero()) {
+            Log.writeln("updateCounter encounter Zero slot!");
+            return;
+        }
         if (!isInSpace(Plan.targetSpace.getDescriptor(), slot)) {
             return;
         }
@@ -114,17 +140,32 @@ import org.vmmagic.unboxed.*;
         Address base = ((Map64) HeapLayout.vmMap).getSpaceBaseAddress(Plan.targetSpace);
         slot = slot.toWord().and(Word.fromIntSignExtend(~7)).toAddress();
         Address addr = this.start.plus(slot.diff(base));
+        if (addr.GT(start.plus(length))) {
+            Log.write("updateCounter is going to write beyond counting space range: ");
+            Log.write("slot: ", slot);
+            Log.write("  targetspace base: ", base);
+            Log.writeln(" counterspace start: ", this.start);
+            Log.flush();
+            VM.assertions.fail("stop at updatecounter.");
+        }
         long val = addr.loadLong();
         val++;
+        if (val == 0) {
+            Log.write("updateCounter overflow slot: ");
+            Log.writeln(slot);
+        }
         addr.store(val);
     }
     public void dumpCounts() {
-        if (Options.verbose.getValue() >2) {
+        if (Options.verbose.getValue() > 1) {
             Log.write("Start dumping write counts for space: ");
             Log.write(this.getName());
             Log.write(" length: ");
-            Log.write(length.toLong() >> 20);
-            Log.writeln(" MB");
+            Log.write(length.toLong() >>> 20);
+            Log.write(" MB ");
+            Log.write((length.toLong() >>> 10) & ((1 << 10)-1));
+            Log.writeln(" KB");
+
         }
         Address end = start.plus(length).minus(1);
         Address addr = start;

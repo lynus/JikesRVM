@@ -27,8 +27,10 @@ import org.vmmagic.unboxed.Extent;
     Address allocPages(int reservedPages, int requiredPages, boolean zeroed) {
         Address old = cursor;
         Extent bytes = Conversions.pagesToBytes(requiredPages);
-        if (cursor.plus(bytes).GT(limit))
-          return Address.zero();
+        //It seems Jikes RVM does NOT strictly respect '-Xmx', target space can map more than the limit value.
+        //So I have to comment out these statements.
+//        if (cursor.plus(bytes).GT(limit))
+//          return Address.zero();
         cursor = cursor.plus(bytes);
         HeapLayout.mmapper.ensureMapped(old, requiredPages);
         VM.memory.zero(zeroNT, old, bytes);

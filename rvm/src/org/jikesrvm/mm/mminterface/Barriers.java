@@ -558,13 +558,6 @@ public class Barriers {
     if (VM.forceMutatorCountWrite) {
       ObjectReference array = ObjectReference.fromObject(ref);
       Offset offset = Offset.fromIntSignExtend(index << logsize);
-/*
-      VM.sysWrite("ArrayWriteCount ref address: ");
-      VM.sysWrite(array.toAddress());
-      VM.sysWrite(", index: ");
-      VM.sysWrite(index);
-      VM.sysWrite(" , logsize: ");
-      VM.sysWriteln(logsize);  */
       Selected.Mutator.get().intWriteCount(array.toAddress().plus(offset));
     }
   }

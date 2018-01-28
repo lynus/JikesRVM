@@ -237,7 +237,8 @@ public abstract class Plan {
     }
     if (VM.barriers.doesMutatorCountWrite() || Options.gcCountWrite.getValue()) {
       FileLog log = new FileLog();
-      counterSpace.setLimit(HeapGrowthManager.getMaxHeapSize());
+      //It seems Jikes rvm does NOT strictly respect '-Xmx' option. so I have to comment out setLimit method.
+      //counterSpace.setLimit(HeapGrowthManager.getMaxHeapSize());
       counterSpace.populateCounters(totalMemory());
       targetSpace = counterSpace.getTargetSpace();
       if (Options.verbose.getValue() > 2) {
