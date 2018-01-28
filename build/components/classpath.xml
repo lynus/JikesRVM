@@ -176,6 +176,8 @@
            dir="${classpath.package.dir}/classpath/" strip="0"/>
     <patch patchfile="${components.patch.dir}/classpath-web.RVM-1047.patch"
            dir="${classpath.package.dir}/classpath/" strip="0"/>
+    <patch patchfile="${components.patch.dir}/remove_Werror.patch"
+           dir="${classpath.package.dir}/classpath/" strip="0"/>
   </target>
   <target name="patch" depends="patch-classpath-web,patch-classpath-git"/>
 
@@ -198,7 +200,7 @@
             <equals arg1="${target.os}" arg2="Solaris"/> 
             <equals arg1="${target.name}" arg2="ppc64-linux"/>
             <equals arg1="${target.name}" arg2="x86_64-linux"/>
-            <equals arg1="${target.name}" arg2="x86_64_m64-linux"/>
+            <!--<equals arg1="${target.name}" arg2="x86_64_m64-linux"/>-->
             <equals arg1="${target.name}" arg2="x86_64_m64s-linux"/>
           </or>
         </not>

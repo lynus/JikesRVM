@@ -1,0 +1,30 @@
+diff -u configure.ac configure.ac
+--- configure.ac	2018-01-24 22:03:16.879559485 +0800
++++ configure.ac	2018-01-24 21:22:24.000000000 +0800
+@@ -383,16 +383,16 @@
+ AM_PROG_CC_C_O
+ AC_PROG_CPP
+ 
+-# Handle -Werror default case.
+-if test "$ENABLE_WERROR" = default; then
+-  case "$host_os" in
+-    *linux*)
+-      if test "$GCC" = yes; then
+-        ENABLE_WERROR=yes
+-      fi
+-      ;;
+-  esac
+-fi
++# Handle -Werror default case.
++#if test "$ENABLE_WERROR" = default; then
++#  case "$host_os" in
++#    *linux*)
++#      if test "$GCC" = yes; then
++#        ENABLE_WERROR=yes
++#      fi
++#      ;;
++#  esac
++#fi
+ 
+ if test "x${COMPILE_COLLECTIONS}" = xyes; then
+   AC_PATH_PROG(PERL, [perl])
