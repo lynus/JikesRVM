@@ -840,7 +840,7 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
       if (notBlockForWriteCount()) {
         asm.emitPUSH_Reg(GPR.R8);
         asm.emitPUSH_Reg(GPR.R9);
-        asm.emitPUSH_Imm(LOG_BYTES_IN_CHAR);
+        asm.emitPUSH_Imm(LOG_BYTES_IN_SHORT);
         Barriers.compileArrayStoreCount(asm, this);
       }
     }
@@ -882,7 +882,7 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
       if (notBlockForWriteCount()) {
         asm.emitPUSH_Reg(GPR.R8);
         asm.emitPUSH_Reg(GPR.R9);
-        asm.emitPUSH_Imm(LOG_BYTES_IN_CHAR);
+        asm.emitPUSH_Imm(LOG_BYTES_IN_LONG);
         Barriers.compileArrayStoreCount(asm, this);
       }
     }
@@ -903,7 +903,7 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
       if (notBlockForWriteCount()) {
         asm.emitPUSH_Reg(GPR.R8);
         asm.emitPUSH_Reg(GPR.R9);
-        asm.emitPUSH_Imm(LOG_BYTES_IN_CHAR);
+        asm.emitPUSH_Imm(LOG_BYTES_IN_DOUBLE);
         Barriers.compileArrayStoreCount(asm, this);
       }
     }
