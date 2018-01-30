@@ -40,3 +40,6 @@ Count, and report, the number of thread state transitions.  This works better on
 
 forceMutatorCountWrite false
 Force mutator enable write barrier to count app's write to heap
+
+memcopyCount false
+Force counting memory writes incured by memcpy called by JNI functions.(forceMutatorCountWrite should be set)

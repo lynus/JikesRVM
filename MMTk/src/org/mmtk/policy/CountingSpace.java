@@ -105,17 +105,24 @@ import org.vmmagic.unboxed.*;
     }
 
     public void updateCounter(Address start, Address end) {
-        //Right Now updateCounter only called from MCCollector during compact phase, it's should be in range of target heap
-        if(VM.VERIFY_ASSERTIONS)
-            VM.assertions._assert(isInSpace(Plan.targetSpace.getDescriptor(), start)
-                    && isInSpace(Plan.targetSpace.getDescriptor(), end));
+        if (!isInSpace(Plan.targetSpace.getDescriptor(), start)
+            || !isInSpace(Plan.targetSpace.getDescriptor(), end))
+            return;
+        if (Options.verbose.getValue() > 4) {
+            Log.write("updateCount [");
+            Log.write(start);
+            Log.write(", ");
+            Log.write(end);
+            Log.writeln(']');
+        }
         Address base = ((Map64) HeapLayout.vmMap).getSpaceBaseAddress(Plan.targetSpace);
         start = start.toWord().and(Word.fromIntSignExtend(~7)).toAddress();
         end = end.plus(7).toWord().and(Word.fromIntSignExtend(~7)).toAddress();
         Offset from = start.diff(base);
         end  = this.start.plus(end.diff(base));
-        if (VM.VERIFY_ASSERTIONS)
-            VM.assertions._assert(end.LE(((CountingPageResource)pr).getLimit()));
+        if (VM.VERIFY_ASSERTIONS) {
+            VM.assertions._assert(end.LE(this.start.plus(length)));
+        }
         Address addr = this.start.plus(from);
         do {
             long val = addr.loadLong();

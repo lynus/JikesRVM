@@ -19,6 +19,7 @@ import static org.jikesrvm.runtime.JavaSizeConstants.LOG_BYTES_IN_SHORT;
 import static org.jikesrvm.runtime.UnboxedSizeConstants.BYTES_IN_ADDRESS;
 
 import org.jikesrvm.VM;
+import org.mmtk.plan.Plan;
 import org.vmmagic.pragma.Inline;
 import org.vmmagic.pragma.Uninterruptible;
 import org.vmmagic.unboxed.Address;
@@ -451,6 +452,8 @@ public class Memory {
    * @param cnt   Number of bytes to copy
    */
   public static void memcopy(Address dst, Address src, int cnt) {
+    if (VM.memcopyCount)
+      Plan.updateWriteCountRange(dst, dst.plus(cnt));
     memcopy(dst, src, Extent.fromIntSignExtend(cnt));
   }
 
