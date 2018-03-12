@@ -94,7 +94,7 @@ import org.vmmagic.unboxed.*;
         for (Space sp : getSpaces()) {
             name = sp.getName();
             if (name != "boot" && name != "immortal" && name != "meta" && name != "los" && name != "sanity" && name != "non-moving"
-                    && name != "sm-code" && name != "lg-code" && name != "vm" && name != "write-counter") {
+                    && name != "sm-code" && name != "lg-code" && name != "vm" && name != "write-counter" && name != "nursery") {
                 if (Options.verbose.getValue() > 1) {
                     Log.writeln("target space base address: ",((Map64) HeapLayout.vmMap).getSpaceBaseAddress(sp) );
                 }
