@@ -776,7 +776,8 @@ public final class Atom {
       {"Lorg/jikesrvm/".getBytes(), "Lorg/vmmagic/".getBytes(), "Lorg/mmtk/".getBytes()};
 
   private static final byte[][] EXTRA_BLACKLIST_WRITECOUNT_PREFIX_SET =
-      {"Lorg/vmutil/options/".getBytes()};
+      {"Lorg/vmutil/options/".getBytes(),
+       "Lcom/ibm/tuningfork/".getBytes()};
   /**
    * @return true if this is a class descriptor of a bootstrap class
    * (ie a class that must be loaded by the bootstrap class loader)
