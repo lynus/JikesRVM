@@ -91,19 +91,31 @@ import org.vmmagic.unboxed.*;
 
     public static Space getTargetSpace() {
         String name;
+        boolean getNursery = Options.nurseryCountWrite.getValue();
+        Space ret = null;
         for (Space sp : getSpaces()) {
             name = sp.getName();
-            if (name != "boot" && name != "immortal" && name != "meta" && name != "los" && name != "sanity" && name != "non-moving"
-                    && name != "sm-code" && name != "lg-code" && name != "vm" && name != "write-counter" && name != "nursery") {
-                if (Options.verbose.getValue() > 1) {
-                    Log.writeln("target space base address: ",((Map64) HeapLayout.vmMap).getSpaceBaseAddress(sp) );
-                }
-                return sp;
+            if (getNursery && name == "nursery") {
+                ret = sp;
+                break;
+            }
+            if (!getNursery && name != "boot" && name != "immortal" && name != "meta" && name != "los" &&
+                    name != "sanity" && name != "non-moving" && name != "sm-code" && name != "lg-code" &&
+                    name != "vm" && name != "write-counter" && name != "nursery") {
+                ret = sp;
+                break;
             }
         }
-        return null;
-    }
+        if (ret != null) {
+            if (Options.verbose.getValue() > 1) {
+                Log.writeln("target space base address: ", ((Map64) HeapLayout.vmMap).getSpaceBaseAddress(ret));
+            }
+        } else if (Options.verbose.getValue() > 1) {
+            Log.writeln("failed to get target space!");
+        }
 
+        return ret;
+    }
     public void updateCounter(Address start, Address end) {
         if (!isInSpace(Plan.targetSpace.getDescriptor(), start)
             || !isInSpace(Plan.targetSpace.getDescriptor(), end))

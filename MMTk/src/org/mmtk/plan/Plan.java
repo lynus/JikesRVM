@@ -175,6 +175,7 @@ public abstract class Plan {
     Options.threads = new Threads();
     Options.cycleTriggerThreshold = new CycleTriggerThreshold();
     Options.gcCountWrite = new GCCountWrite();
+    Options.nurseryCountWrite = new NurseryCountWrite();
 
     HeapLayout.vmMap.finalizeStaticSpaceMap();
     registerSpecializedMethods();
@@ -239,7 +240,10 @@ public abstract class Plan {
       FileLog log = new FileLog();
       //It seems Jikes rvm does NOT strictly respect '-Xmx' option. so I have to comment out setLimit method.
       //counterSpace.setLimit(HeapGrowthManager.getMaxHeapSize());
-      counterSpace.populateCounters(totalMemory());
+      if (!Options.nurseryCountWrite.getValue())
+        counterSpace.populateCounters(totalMemory());
+      else
+          counterSpace.populateCounters(Extent.fromIntSignExtend(Options.nurserySize.getMaxNursery() << LOG_BYTES_IN_PAGE));
       targetSpace = counterSpace.getTargetSpace();
       if (Options.verbose.getValue() > 2) {
         Log.write("get target space: ");

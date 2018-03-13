@@ -68,4 +68,5 @@ public final class Options {
   public static VerboseTiming verboseTiming;
   public static XmlStats xmlStats;
   public static GCCountWrite gcCountWrite;
+  public static NurseryCountWrite nurseryCountWrite;
 }
