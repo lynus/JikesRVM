@@ -240,11 +240,16 @@ public abstract class Plan {
       FileLog log = new FileLog();
       //It seems Jikes rvm does NOT strictly respect '-Xmx' option. so I have to comment out setLimit method.
       //counterSpace.setLimit(HeapGrowthManager.getMaxHeapSize());
+      if (!isGenerational()) {
+          if (Options.nurseryCountWrite.getValue() && Options.verbose.getValue() > 2)
+              Log.writeln("Non-generational plan, count for full heap");
+          Options.nurseryCountWrite.setValue(false);
+      }
       if (!Options.nurseryCountWrite.getValue())
         counterSpace.populateCounters(totalMemory());
       else
-          counterSpace.populateCounters(Extent.fromIntSignExtend(Options.nurserySize.getMaxNursery() << LOG_BYTES_IN_PAGE));
-      targetSpace = counterSpace.getTargetSpace();
+        counterSpace.populateCounters(Extent.fromIntSignExtend(Options.nurserySize.getMaxNursery() << LOG_BYTES_IN_PAGE));
+      targetSpace = CountingSpace.getTargetSpace();
       if (Options.verbose.getValue() > 2) {
         Log.write("get target space: ");
         Log.writeln(targetSpace.getName());
@@ -1094,6 +1099,9 @@ public abstract class Plan {
      * Individual plans should override for non-moving spaces they define.
      */
     return false;
+  }
+  public boolean isGenerational() {
+      return false;
   }
 
   /****************************************************************************

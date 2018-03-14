@@ -445,4 +445,9 @@ public abstract class Gen extends StopTheWorld {
     super.fullyBooted();
     nurserySpace.setZeroingApproach(Options.nurseryZeroing.getNonTemporal(), Options.nurseryZeroing.getConcurrent());
   }
+
+  @Override
+  public boolean isGenerational() {
+    return true;
+  }
 }
