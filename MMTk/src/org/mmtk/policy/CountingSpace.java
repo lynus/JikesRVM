@@ -18,10 +18,12 @@ import org.vmmagic.unboxed.*;
 
 @Uninterruptible public class CountingSpace extends Space {
     private Extent length;
+    private Extent highWaterMark;
     public CountingSpace(String name, VMRequest vmRequest) {
         super(name, false, true, true, vmRequest);
         pr = new CountingPageResource(this, start);
         length = Extent.zero();
+        highWaterMark = Extent.zero();
     }
 
     @Override
@@ -77,6 +79,8 @@ import org.vmmagic.unboxed.*;
     public void grow(Address addr, Extent bytes) {
         Address base = ((Map64) HeapLayout.vmMap).getSpaceBaseAddress(Plan.targetSpace);
         Extent newleng = addr.plus(bytes).diff(base).toWord().toExtent();
+        if (newleng.GT(highWaterMark))
+            highWaterMark = newleng;
         if (newleng.GT(length)) {
             int pages = Conversions.bytesToPagesUp(newleng.minus(length));
             pr.getNewPages(pages, pages, true);
@@ -180,13 +184,13 @@ import org.vmmagic.unboxed.*;
             Log.write("Start dumping write counts for space: ");
             Log.write(this.getName());
             Log.write(" length: ");
-            Log.write(length.toLong() >>> 20);
+            Log.write(highWaterMark.toLong() >>> 20);
             Log.write(" MB ");
-            Log.write((length.toLong() >>> 10) & ((1 << 10)-1));
+            Log.write((highWaterMark.toLong() >>> 10) & ((1 << 10)-1));
             Log.writeln(" KB");
 
         }
-        Address end = start.plus(length).minus(1);
+        Address end = start.plus(highWaterMark).minus(1);
         Address addr = start;
         int thre = 0;
         int i = 0;

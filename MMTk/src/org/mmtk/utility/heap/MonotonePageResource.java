@@ -14,6 +14,7 @@ package org.mmtk.utility.heap;
 
 import static org.mmtk.utility.Constants.*;
 
+import org.mmtk.plan.Plan;
 import org.mmtk.policy.Space;
 import org.mmtk.utility.Conversions;
 import org.mmtk.utility.Log;
@@ -186,6 +187,10 @@ public final class MonotonePageResource extends PageResource {
       }
       commitPages(reservedPages, requiredPages);
       space.growSpace(old, bytes, newChunk);
+      //have to place the grow method in the critical region.
+      if (space == Plan.targetSpace) {
+        Plan.counterSpace.grow(rtn, bytes);
+      }
       unlock();
       HeapLayout.mmapper.ensureMapped(old, requiredPages);
       if (zeroed) {
