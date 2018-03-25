@@ -13,6 +13,7 @@
 package org.mmtk.plan.generational.copying;
 
 import org.mmtk.policy.CopySpace;
+import org.mmtk.policy.DualCountingSpace;
 import org.mmtk.policy.Space;
 import org.mmtk.plan.generational.*;
 import org.mmtk.plan.Trace;
@@ -21,6 +22,7 @@ import org.mmtk.utility.heap.VMRequest;
 import org.mmtk.vm.VM;
 
 import org.vmmagic.pragma.*;
+import org.vmmagic.unboxed.Address;
 
 /**
  * This class implements the functionality of a standard
@@ -218,5 +220,20 @@ import org.vmmagic.pragma.*;
   protected void registerSpecializedMethods() {
     TransitiveClosure.registerSpecializedScan(SCAN_MATURE, GenCopyMatureTraceLocal.class);
     super.registerSpecializedMethods();
+  }
+
+  @Override
+  public boolean hasSemiSpace() {
+    return true;
+  }
+
+  @Override
+  public void updateWriteCountRange(Address start, Address end) {
+    ((DualCountingSpace)counterSpace).updateCounter(toSpace(), start, end);
+  }
+
+  @Override
+  public void updateWriteCount(Address slot) {
+    ((DualCountingSpace)counterSpace).updateCounter(toSpace(), slot);
   }
 }

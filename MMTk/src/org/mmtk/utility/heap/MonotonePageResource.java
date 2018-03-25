@@ -188,9 +188,7 @@ public final class MonotonePageResource extends PageResource {
       commitPages(reservedPages, requiredPages);
       space.growSpace(old, bytes, newChunk);
       //have to place the grow method in the critical region.
-      if (space == Plan.targetSpace) {
-        Plan.counterSpace.grow(rtn, bytes);
-      }
+      Plan.counterSpace.grow(space, rtn, bytes);
       unlock();
       HeapLayout.mmapper.ensureMapped(old, requiredPages);
       if (zeroed) {

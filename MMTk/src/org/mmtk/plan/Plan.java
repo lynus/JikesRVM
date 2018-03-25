@@ -122,8 +122,8 @@ public abstract class Plan {
   public static final MarkSweepSpace smallCodeSpace = USE_CODE_SPACE ? new MarkSweepSpace("sm-code", VMRequest.discontiguous()) : null;
   public static final LargeObjectSpace largeCodeSpace = USE_CODE_SPACE ? new LargeObjectSpace("lg-code", VMRequest.discontiguous()) : null;
 
-  public static final CountingSpace counterSpace = new CountingSpace("write-counter", VMRequest.discontiguous());
-  public static Space targetSpace = null;
+  public static final CountingSpace counterSpace = VM.activePlan.global().hasSemiSpace() ? new DualCountingSpace("dual-counter", VMRequest.discontiguous())
+                                                : new CountingSpace("write-counter", VMRequest.discontiguous());
   public static int pretenureThreshold = Integer.MAX_VALUE;
 
   /* Space descriptors */
@@ -249,11 +249,7 @@ public abstract class Plan {
         counterSpace.populateCounters(totalMemory());
       else
         counterSpace.populateCounters(Extent.fromIntSignExtend(Options.nurserySize.getMaxNursery() << LOG_BYTES_IN_PAGE));
-      targetSpace = CountingSpace.getTargetSpace();
-      if (Options.verbose.getValue() > 2) {
-        Log.write("get target space: ");
-        Log.writeln(targetSpace.getName());
-      }
+      Space targetSpace = counterSpace.getTargetSpace(null);
     }
 
 
@@ -1123,12 +1119,15 @@ public abstract class Plan {
   }
 
   @Inline
-  public static void updateWriteCountRange(Address start, Address end) {
+  public void updateWriteCountRange(Address start, Address end) {
     counterSpace.updateCounter(start, end);
   }
 
   @Inline
-  public static void updateWriteCount(Address slot) {
+  public void updateWriteCount(Address slot) {
     counterSpace.updateCounter(slot);
+  }
+  public boolean hasSemiSpace() {
+      return false;
   }
 }

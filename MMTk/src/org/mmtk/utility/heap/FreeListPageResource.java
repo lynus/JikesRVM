@@ -181,9 +181,7 @@ public final class FreeListPageResource extends PageResource {
       commitPages(reservedPages, requiredPages);
       space.growSpace(rtn, bytes, newChunk);
       //have to place the grow method in the critical region.
-      if (space == Plan.targetSpace) {
-        Plan.counterSpace.grow(rtn, bytes);
-      }
+      Plan.counterSpace.grow(space, rtn, bytes);
       unlock();
       HeapLayout.mmapper.ensureMapped(rtn, requiredPages);
 

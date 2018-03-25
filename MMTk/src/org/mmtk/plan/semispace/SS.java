@@ -13,6 +13,7 @@
 package org.mmtk.plan.semispace;
 
 import org.mmtk.policy.CopySpace;
+import org.mmtk.policy.DualCountingSpace;
 import org.mmtk.policy.Space;
 import org.mmtk.plan.*;
 import org.mmtk.utility.heap.VMRequest;
@@ -183,5 +184,20 @@ public class SS extends StopTheWorld {
   protected void registerSpecializedMethods() {
     TransitiveClosure.registerSpecializedScan(SCAN_SS, SSTraceLocal.class);
     super.registerSpecializedMethods();
+  }
+
+  @Override
+  public boolean hasSemiSpace() {
+    return true;
+  }
+
+  @Override
+  public void updateWriteCountRange(Address start, Address end) {
+    ((DualCountingSpace)counterSpace).updateCounter(toSpace(), start, end);
+  }
+
+  @Override
+  public void updateWriteCount(Address slot) {
+    ((DualCountingSpace)counterSpace).updateCounter(toSpace(), slot);
   }
 }

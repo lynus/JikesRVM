@@ -230,10 +230,16 @@ public abstract class Gen extends StopTheWorld {
     Plan.pretenureThreshold = (int) ((availableNurseryPages << LOG_BYTES_IN_PAGE) * Options.pretenureThresholdFraction.getValue());
 
     if (availableNurseryPages <= 0) {
+      Log.write("GC required: available nursery not met");
+      Log.write(" maxNurseryPages: ");
+      Log.write(Options.nurserySize.getMaxNursery());
+      Log.write("  Nursery reserved pages: ");
+      Log.writeln(nurserySpace.reservedPages());
       return true;
     }
 
     if (virtualMemoryExhausted()) {
+      Log.writeln("GC required: virtual Memory Exhausted!");
       return true;
     }
 

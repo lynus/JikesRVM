@@ -543,7 +543,7 @@ public abstract class MutatorContext {
 
   public void intWriteCount(Address slot) {
     if (VM.VERIFY_ASSERTIONS) VM.assertions._assert(!Options.gcCountWrite.getValue());
-    Plan.updateWriteCount(slot);
+    VM.activePlan.global().updateWriteCount(slot);
   }
 
   /**

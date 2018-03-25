@@ -19,6 +19,7 @@ import static org.jikesrvm.runtime.JavaSizeConstants.LOG_BYTES_IN_SHORT;
 import static org.jikesrvm.runtime.UnboxedSizeConstants.BYTES_IN_ADDRESS;
 
 import org.jikesrvm.VM;
+import org.jikesrvm.mm.mminterface.Selected;
 import org.mmtk.plan.Plan;
 import org.vmmagic.pragma.Inline;
 import org.vmmagic.pragma.Uninterruptible;
@@ -453,7 +454,7 @@ public class Memory {
    */
   public static void memcopy(Address dst, Address src, int cnt) {
     if (VM.memcopyCount)
-      Plan.updateWriteCountRange(dst, dst.plus(cnt));
+      Selected.Plan.get().updateWriteCountRange(dst, dst.plus(cnt));
     memcopy(dst, src, Extent.fromIntSignExtend(cnt));
   }
 

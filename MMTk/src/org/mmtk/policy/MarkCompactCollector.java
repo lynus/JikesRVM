@@ -402,7 +402,7 @@ public final class MarkCompactCollector {
       if (VM.VERIFY_ASSERTIONS)
         VM.assertions._assert(VM.objectModel.getObjectEndAddress(to).LE(limit));
       if (Options.gcCountWrite.getValue())
-        Plan.updateWriteCountRange(savedCursor, cursor);
+        VM.activePlan.global().updateWriteCountRange(savedCursor, cursor);
 //      if (from.toAddress().LT(to.toAddress()))
 //        Log.writeln("from is less than to!");
     }

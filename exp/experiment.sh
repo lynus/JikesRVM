@@ -52,13 +52,15 @@ rm failcmd 2>/dev/null
 rootpath=`pwd`
 rvmpath=$(dirname $rootpath)
 #gc=('ms' 'mc' 'immx')
-gc=('genms' 'genimmx')
+#gc=('genms' 'genimmx')
+gc=('gencopy' 'semispace')
 heapsize=('3000')
 #gcpath=('MarkCompact' 'MarkSweep' 'Immix')
-gcpath=('GenMS' 'GenImmix')
+#gcpath=('GenMS' 'GenImmix')
+gcpath=('GenCopy' 'SemiSpace')
 bench=('eclipse' 'hsqldb' 'antlr' 'bloat' 'chart' 'fop' 'jython' 'luindex' 'lusearch' 'pmd' 'xalan')
 #bench=( 'hsqldb' 'jython' 'fop' 'luindex' 'lusearch' 'pmd' 'eclipse')
-#bench=('chart')
+#bench=('antlr' 'hsqldb' 'fop' 'jython')
 for ((i=0;i<${#gc[@]};i++)); do
 	for((j=0;j<${#heapsize[@]};j++)); do
         (
@@ -71,7 +73,7 @@ for ((i=0;i<${#gc[@]};i++)); do
 		logfileflag='-X:logFile='${combine}
 		syslogflag='-X:sysLogfile=syslog_'${combine}
 		prog_output='output_'${combine}
-		flag='-X:vm:forceMutatorCountWrite=true -X:gc:threads=8 -X:gc:verbose=3 -jar dacapo-2006-10-MR2.jar'
+		flag='-X:vm:forceMutatorCountWrite=true -X:gc:threads=4 -X:gc:verbose=3 -jar dacapo-2006-10-MR2.jar'
 		nurseryflag=' '
 		if [ $nursery == 1 ]; then
 			nurseryflag='-X:gc:countfornursery=true'
@@ -92,13 +94,13 @@ for ((i=0;i<${#gc[@]};i++)); do
 		echo ${cmd} >cmd
 		echo 'start '${combine}
 		if [ ${bench[$k]} == 'chart' ]; then
-			xvfb-run -n ${i}${k} ${cmd} >${prog_output} 2>&1
+			xvfb-run -n ${i}${k}1 ${cmd} >${prog_output} 2>&1
 		else
 			${cmd} >${prog_output} 2>&1
 		fi
 		ret=$?
 		if [ $ret -ne -0 ]; then
-			echo ${combine}' failed!!.'
+			echo ${combine}' failed!!!'
 			echo ${combine} >>${rootpath}'/faillist_'$conf_name
 			echo $cmd >>${rootpath}/failcmd_$conf_name
 		else

@@ -19,6 +19,7 @@ import org.vmmagic.unboxed.*;
 @Uninterruptible public class CountingSpace extends Space {
     private Extent length;
     private Extent highWaterMark;
+    public Space targetSpace;
     public CountingSpace(String name, VMRequest vmRequest) {
         super(name, false, true, true, vmRequest);
         pr = new CountingPageResource(this, start);
@@ -76,8 +77,10 @@ import org.vmmagic.unboxed.*;
         }
     }
 
-    public void grow(Address addr, Extent bytes) {
-        Address base = ((Map64) HeapLayout.vmMap).getSpaceBaseAddress(Plan.targetSpace);
+    public void grow(Space space, Address addr, Extent bytes) {
+        if (space != targetSpace)
+            return;
+        Address base = ((Map64) HeapLayout.vmMap).getSpaceBaseAddress(targetSpace);
         Extent newleng = addr.plus(bytes).diff(base).toWord().toExtent();
         if (newleng.GT(highWaterMark))
             highWaterMark = newleng;
@@ -93,10 +96,13 @@ import org.vmmagic.unboxed.*;
 
     }
 
-    public static Space getTargetSpace() {
-        String name;
+    public Space getTargetSpace(Space exclude) {
+        String name, excludeName = null;
         boolean getNursery = Options.nurseryCountWrite.getValue();
         Space ret = null;
+        if (exclude != null)
+            excludeName = exclude.getName();
+
         for (Space sp : getSpaces()) {
             name = sp.getName();
             if (getNursery && name == "nursery") {
@@ -106,23 +112,27 @@ import org.vmmagic.unboxed.*;
             if (!getNursery && name != "boot" && name != "immortal" && name != "meta" && name != "los" &&
                     name != "sanity" && name != "non-moving" && name != "sm-code" && name != "lg-code" &&
                     name != "vm" && name != "write-counter" && name != "nursery") {
+                if (excludeName != null && name == excludeName)
+                    continue;
                 ret = sp;
                 break;
             }
         }
         if (ret != null) {
             if (Options.verbose.getValue() > 1) {
+                Log.write("getTargetSpace: ");
+                Log.writeln(ret.getName());
                 Log.writeln("target space base address: ", ((Map64) HeapLayout.vmMap).getSpaceBaseAddress(ret));
             }
         } else if (Options.verbose.getValue() > 1) {
             Log.writeln("failed to get target space!");
         }
-
+        targetSpace = ret;
         return ret;
     }
     public void updateCounter(Address start, Address end) {
-        if (!isInSpace(Plan.targetSpace.getDescriptor(), start)
-            || !isInSpace(Plan.targetSpace.getDescriptor(), end))
+        if (!isInSpace(targetSpace.getDescriptor(), start)
+            || !isInSpace(targetSpace.getDescriptor(), end))
             return;
         if (Options.verbose.getValue() > 4) {
             Log.write("updateCount [");
@@ -131,7 +141,7 @@ import org.vmmagic.unboxed.*;
             Log.write(end);
             Log.writeln(']');
         }
-        Address base = ((Map64) HeapLayout.vmMap).getSpaceBaseAddress(Plan.targetSpace);
+        Address base = ((Map64) HeapLayout.vmMap).getSpaceBaseAddress(targetSpace);
         start = start.toWord().and(Word.fromIntSignExtend(~7)).toAddress();
         end = end.plus(7).toWord().and(Word.fromIntSignExtend(~7)).toAddress();
         Offset from = start.diff(base);
@@ -153,14 +163,14 @@ import org.vmmagic.unboxed.*;
             Log.writeln("updateCounter encounter Zero slot!");
             return;
         }
-        if (!isInSpace(Plan.targetSpace.getDescriptor(), slot)) {
+        if (!isInSpace(targetSpace.getDescriptor(), slot)) {
             return;
         }
         if (Options.verbose.getValue() > 4) {
             Log.write("updateCounter slot:");
             Log.writeln(slot);
         }
-        Address base = ((Map64) HeapLayout.vmMap).getSpaceBaseAddress(Plan.targetSpace);
+        Address base = ((Map64) HeapLayout.vmMap).getSpaceBaseAddress(targetSpace);
         slot = slot.toWord().and(Word.fromIntSignExtend(~7)).toAddress();
         Address addr = this.start.plus(slot.diff(base));
         if (addr.GT(start.plus(length))) {
@@ -204,7 +214,8 @@ import org.vmmagic.unboxed.*;
 //            double mean = sum / 512;
 //            FileLog.write(mean, 1);
             FileLog.write(sum);
-            FileLog.write(',');
+            if (addr.plus(4096).LE(end))
+                FileLog.write(',');
             thre++;
             if (thre % 100 == 0) {
                 FileLog.flush();
