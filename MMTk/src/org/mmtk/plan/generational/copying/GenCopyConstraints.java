@@ -19,4 +19,8 @@ import org.vmmagic.pragma.*;
  * GenCopy constants.
  */
 @Uninterruptible public class GenCopyConstraints extends GenConstraints {
+  @Override
+  public int maxNonLOSCopyBytes() {
+    return 8 << 10;
+  }
 }

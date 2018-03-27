@@ -434,10 +434,6 @@ public abstract class Space {
 
     /* Check page budget */
     int pagesReserved = pr.reservePages(pages);
-    if (pagesReserved > 100) {
-      Log.write("acquire too much pages: ");
-      Log.writeln(pagesReserved);
-    }
     /* Poll, either fixing budget or requiring GC */
     if (allowPoll && VM.activePlan.global().poll(false, this)) {
       pr.clearRequest(pagesReserved);
