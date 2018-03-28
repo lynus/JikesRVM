@@ -122,8 +122,8 @@ public abstract class Plan {
   public static final MarkSweepSpace smallCodeSpace = USE_CODE_SPACE ? new MarkSweepSpace("sm-code", VMRequest.discontiguous()) : null;
   public static final LargeObjectSpace largeCodeSpace = USE_CODE_SPACE ? new LargeObjectSpace("lg-code", VMRequest.discontiguous()) : null;
 
-  public static final CountingSpace counterSpace = VM.activePlan.global().hasSemiSpace() ? new DualCountingSpace("dual-counter", VMRequest.discontiguous())
-                                                : new CountingSpace("write-counter", VMRequest.discontiguous());
+  public static final CountingSpace counterSpace =  VM.activePlan.global() != null ? (VM.activePlan.global().hasSemiSpace() ? new DualCountingSpace("dual-counter", VMRequest.discontiguous())
+                                                : new CountingSpace("write-counter", VMRequest.discontiguous())) : new DummyCountingSpace("write-counter", VMRequest.discontiguous());
   public static int pretenureThreshold = Integer.MAX_VALUE;
 
   /* Space descriptors */
