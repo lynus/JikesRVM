@@ -1,10 +1,11 @@
 package org.mmtk.policy;
 
 import org.mmtk.utility.heap.VMRequest;
+import org.vmmagic.pragma.Uninterruptible;
 import org.vmmagic.unboxed.Address;
 import org.vmmagic.unboxed.Extent;
 
-public class DummyCountingSpace extends CountingSpace {
+@Uninterruptible public class DummyCountingSpace extends CountingSpace {
   public DummyCountingSpace(String name, VMRequest vmRequest) {
     super(name, vmRequest);
   }
