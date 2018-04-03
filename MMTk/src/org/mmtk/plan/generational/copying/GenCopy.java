@@ -199,6 +199,7 @@ import org.vmmagic.unboxed.Address;
 
   @Override
   public int getMaturePhysicalPagesAvail() {
+    // I think availablePages does not need being divied by 2
     return toSpace().availablePhysicalPages() >> 1;
   }
 
