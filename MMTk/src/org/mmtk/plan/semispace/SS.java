@@ -197,7 +197,7 @@ public class SS extends StopTheWorld {
   }
 
   @Override
-  public void updateWriteCount(Address slot) {
+  public void updateWriteCount(ObjectReference object, Address slot) {
     ((DualCountingSpace)counterSpace).updateCounter(toSpace(), slot);
   }
 }

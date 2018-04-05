@@ -23,6 +23,7 @@ import org.mmtk.vm.VM;
 
 import org.vmmagic.pragma.*;
 import org.vmmagic.unboxed.Address;
+import org.vmmagic.unboxed.ObjectReference;
 
 /**
  * This class implements the functionality of a standard
@@ -234,7 +235,7 @@ import org.vmmagic.unboxed.Address;
   }
 
   @Override
-  public void updateWriteCount(Address slot) {
+  public void updateWriteCount(ObjectReference object, Address slot) {
     ((DualCountingSpace)counterSpace).updateCounter(toSpace(), slot);
   }
 }

@@ -8,11 +8,14 @@ import org.mmtk.policy.CopySpace;
 import org.mmtk.policy.DualCountingSpace;
 import org.mmtk.policy.Space;
 import org.mmtk.policy.WearLevelCopySpace;
+import org.mmtk.utility.WearLevelHeader;
 import org.mmtk.utility.heap.VMRequest;
+import org.mmtk.utility.options.Options;
 import org.vmmagic.pragma.Inline;
 import org.vmmagic.pragma.Interruptible;
 import org.vmmagic.pragma.Uninterruptible;
 import org.vmmagic.unboxed.Address;
+import org.vmmagic.unboxed.ObjectReference;
 
 @Uninterruptible public class GenWearLevel extends Gen {
   static boolean hi = false;
@@ -116,7 +119,11 @@ import org.vmmagic.unboxed.Address;
   }
 
   @Override
-  public void updateWriteCount(Address slot) {
-    ((DualCountingSpace)counterSpace).updateCounter(toSpace(), slot);
+  @Inline
+  public void updateWriteCount(ObjectReference object, Address slot) {
+    if (Space.isInSpace(toSpaceDesc(), slot))
+      WearLevelHeader.markHot(object);
+    if (Options.forceMutatorCountWrite.getValue())
+      ((DualCountingSpace)counterSpace).updateCounter(toSpace(), slot);
   }
 }

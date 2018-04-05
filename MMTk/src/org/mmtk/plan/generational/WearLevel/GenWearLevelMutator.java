@@ -8,6 +8,7 @@ import org.mmtk.vm.VM;
 import org.vmmagic.pragma.Inline;
 import org.vmmagic.pragma.Uninterruptible;
 import org.vmmagic.unboxed.Address;
+import org.vmmagic.unboxed.ObjectReference;
 
 @Uninterruptible public class GenWearLevelMutator extends GenMutator {
   private final CopyLocal mature;   //pretenure object to mature space
@@ -52,5 +53,10 @@ import org.vmmagic.unboxed.Address;
 
   private static GenWearLevel global() {
     return (GenWearLevel) VM.activePlan.global();
+  }
+
+  @Override
+  public void intWriteCount(ObjectReference object, Address slot) {
+    global().updateWriteCount(object, slot);
   }
 }

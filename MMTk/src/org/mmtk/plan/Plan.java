@@ -176,7 +176,7 @@ public abstract class Plan {
     Options.cycleTriggerThreshold = new CycleTriggerThreshold();
     Options.gcCountWrite = new GCCountWrite();
     Options.nurseryCountWrite = new NurseryCountWrite();
-
+    Options.forceMutatorCountWrite = new ForceMutatorCountWrite();
     HeapLayout.vmMap.finalizeStaticSpaceMap();
     registerSpecializedMethods();
 
@@ -230,13 +230,13 @@ public abstract class Plan {
     if (Options.verbose.getValue() > 0) Stats.startAll();
     if (Options.eagerMmapSpaces.getValue()) Space.eagerlyMmapMMTkSpaces();
     pretenureThreshold = (int) ((Options.nurserySize.getMaxNursery() << LOG_BYTES_IN_PAGE) * Options.pretenureThresholdFraction.getValue());
-    //check if VM's option forceMutatorCountWrite is set
-    if (VM.barriers.doesMutatorCountWrite() && Options.gcCountWrite.getValue()) {
-      Log.writeln("gc and mutator both want count write, I can't do it right now");
-      Log.writeln("disable gc count write.");
-      Options.gcCountWrite.setValue(false);
-    }
-    if (VM.barriers.doesMutatorCountWrite() || Options.gcCountWrite.getValue()) {
+//    //check if VM's option forceMutatorCountWrite is set
+//    if (VM.barriers.doesMutatorCountWrite() && Options.gcCountWrite.getValue()) {
+//      Log.writeln("gc and mutator both want count write, I can't do it right now");
+//      Log.writeln("disable gc count write.");
+//      Options.gcCountWrite.setValue(false);
+//    }
+    if (Options.forceMutatorCountWrite.getValue() || Options.gcCountWrite.getValue()) {
       FileLog log = new FileLog();
       //It seems Jikes rvm does NOT strictly respect '-Xmx' option. so I have to comment out setLimit method.
       //counterSpace.setLimit(HeapGrowthManager.getMaxHeapSize());
@@ -396,7 +396,7 @@ public abstract class Plan {
     // something is wrong, then do not dump counterSpace.
     if (value != 0)
       return;
-    if (Options.gcCountWrite.getValue() || VM.barriers.doesMutatorCountWrite())
+    if (Options.gcCountWrite.getValue() || Options.forceMutatorCountWrite.getValue())
       counterSpace.dumpCounts();
   }
 
@@ -1124,7 +1124,7 @@ public abstract class Plan {
   }
 
   @Inline
-  public void updateWriteCount(Address slot) {
+  public void updateWriteCount(ObjectReference object, Address slot) {
     counterSpace.updateCounter(slot);
   }
   public boolean hasSemiSpace() {

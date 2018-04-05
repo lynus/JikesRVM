@@ -7,6 +7,7 @@ import org.mmtk.plan.generational.GenCollector;
 import org.mmtk.policy.CopyLocal;
 import org.mmtk.utility.ForwardingWord;
 import org.mmtk.utility.HeaderByte;
+import org.mmtk.utility.WearLevelHeader;
 import org.mmtk.utility.alloc.Allocator;
 import org.mmtk.vm.VM;
 import org.vmmagic.pragma.Inline;
@@ -47,6 +48,8 @@ public class GenWearLevelCollector extends GenCollector {
   public final void postCopy(ObjectReference object, ObjectReference typeRef,
                              int bytes, int allocator) {
     ForwardingWord.clearForwardingBits(object);
+    if (allocator == GenWearLevel.ALLOC_MATURE_MINORGC)
+      WearLevelHeader.markObserve(object);
     if (allocator == Plan.ALLOC_LOS)
       Plan.loSpace.initializeHeader(object, false);
     if (Gen.USE_OBJECT_BARRIER)

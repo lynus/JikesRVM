@@ -38,8 +38,5 @@ Trace when calls into JNI happen
 countThreadTransitions false
 Count, and report, the number of thread state transitions.  This works better on IA32 than on PPC at the moment.
 
-forceMutatorCountWrite false
-Force mutator enable write barrier to count app's write to heap
-
 memcopyCount false
-Force counting memory writes incured by memcpy called by JNI functions.(forceMutatorCountWrite should be set)
+Force counting memory writes incured by memcpy called by JNI functions.(gc:forceMutatorCountWrite should be set)

@@ -73,7 +73,7 @@ for ((i=0;i<${#gc[@]};i++)); do
 		logfileflag='-X:logFile='${combine}
 		syslogflag='-X:sysLogfile=syslog_'${combine}
 		prog_output='output_'${combine}
-		flag='-X:vm:forceMutatorCountWrite=true -X:gc:threads=4 -X:gc:verbose=3 -jar dacapo-2006-10-MR2.jar'
+		flag='-X:gc:forceMutatorCountWrite=true -X:gc:threads=4 -X:gc:verbose=3 -jar dacapo-2006-10-MR2.jar'
 		nurseryflag=' '
 		if [ $nursery == 1 ]; then
 			nurseryflag='-X:gc:countfornursery=true'
