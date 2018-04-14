@@ -16,6 +16,7 @@ import org.mmtk.policy.MarkSweepLocal;
 import org.mmtk.policy.Space;
 import org.mmtk.policy.ImmortalLocal;
 import org.mmtk.policy.LargeObjectLocal;
+import org.mmtk.utility.CardTable;
 import org.mmtk.utility.alloc.Allocator;
 import org.mmtk.utility.alloc.BumpPointer;
 import org.mmtk.utility.Log;
@@ -126,6 +127,7 @@ public abstract class MutatorContext {
   /** Per-mutator allocator into the non moving space */
   protected final MarkSweepLocal nonmove = new MarkSweepLocal(Plan.nonMovingSpace);
 
+  protected CardTable cardTable = null;
 
   /****************************************************************************
    *
@@ -542,8 +544,17 @@ public abstract class MutatorContext {
   }
 
   public void intWriteCount(Address slot) {
-    if (VM.VERIFY_ASSERTIONS) VM.assertions._assert(!Options.gcCountWrite.getValue());
-    VM.activePlan.global().updateWriteCount(slot);
+    if (Options.forceMutatorCountWrite.getValue()) {
+      if (VM.VERIFY_ASSERTIONS) VM.assertions._assert(!Options.gcCountWrite.getValue());
+      VM.activePlan.global().updateWriteCount(slot);
+    }
+  }
+
+  public void updateWriteCountRange(Address start, Address end) {
+    if (Options.forceMutatorCountWrite.getValue()) {
+      if (VM.VERIFY_ASSERTIONS) VM.assertions._assert(!Options.gcCountWrite.getValue());
+      VM.activePlan.global().updateWriteCountRange(start, end);
+    }
   }
 
   /**

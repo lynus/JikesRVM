@@ -39,8 +39,7 @@ import org.vmmagic.unboxed.Extent;
 
     @Override
     public int adjustForMetaData(int pages) {
-        VM.assertions.fail("Will never be called!");
-        return 0;
+        return pages;
     }
 
     public void setLimit(Extent limit) {

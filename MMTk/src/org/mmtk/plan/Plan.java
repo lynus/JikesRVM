@@ -16,14 +16,11 @@ import static org.mmtk.utility.Constants.*;
 import static org.mmtk.vm.VM.EXIT_CODE_REFLECTION_FAILURE;
 
 import org.mmtk.policy.*;
-import org.mmtk.utility.FileLog;
+import org.mmtk.utility.*;
 import org.mmtk.utility.alloc.LinearScan;
-import org.mmtk.utility.Conversions;
-import org.mmtk.utility.HeaderByte;
 import org.mmtk.utility.heap.HeapGrowthManager;
 import org.mmtk.utility.heap.VMRequest;
 import org.mmtk.utility.heap.layout.HeapLayout;
-import org.mmtk.utility.Log;
 import org.mmtk.utility.options.*;
 import org.mmtk.utility.sanitychecker.SanityChecker;
 import org.mmtk.utility.statistics.Timer;
@@ -124,6 +121,7 @@ public abstract class Plan {
 
   public static final CountingSpace counterSpace =  VM.activePlan.global() != null ? (VM.activePlan.global().hasSemiSpace() ? new DualCountingSpace("dual-counter", VMRequest.discontiguous())
                                                 : new CountingSpace("write-counter", VMRequest.discontiguous())) : new DummyCountingSpace("write-counter", VMRequest.discontiguous());
+  public static final CountingSpace cardTableSpace = new CountingSpace("cardtable", VMRequest.discontiguous());
   public static int pretenureThreshold = Integer.MAX_VALUE;
 
   /* Space descriptors */
@@ -176,7 +174,7 @@ public abstract class Plan {
     Options.cycleTriggerThreshold = new CycleTriggerThreshold();
     Options.gcCountWrite = new GCCountWrite();
     Options.nurseryCountWrite = new NurseryCountWrite();
-
+    Options.forceMutatorCountWrite = new ForceMutatorCountWrite();
     HeapLayout.vmMap.finalizeStaticSpaceMap();
     registerSpecializedMethods();
 
@@ -231,12 +229,12 @@ public abstract class Plan {
     if (Options.eagerMmapSpaces.getValue()) Space.eagerlyMmapMMTkSpaces();
     pretenureThreshold = (int) ((Options.nurserySize.getMaxNursery() << LOG_BYTES_IN_PAGE) * Options.pretenureThresholdFraction.getValue());
     //check if VM's option forceMutatorCountWrite is set
-    if (VM.barriers.doesMutatorCountWrite() && Options.gcCountWrite.getValue()) {
+    if (Options.forceMutatorCountWrite.getValue() && Options.gcCountWrite.getValue()) {
       Log.writeln("gc and mutator both want count write, I can't do it right now");
       Log.writeln("disable gc count write.");
       Options.gcCountWrite.setValue(false);
     }
-    if (VM.barriers.doesMutatorCountWrite() || Options.gcCountWrite.getValue()) {
+    if (Options.forceMutatorCountWrite.getValue() || Options.gcCountWrite.getValue()) {
       FileLog log = new FileLog();
       //It seems Jikes rvm does NOT strictly respect '-Xmx' option. so I have to comment out setLimit method.
       //counterSpace.setLimit(HeapGrowthManager.getMaxHeapSize());
@@ -246,7 +244,7 @@ public abstract class Plan {
           Options.nurseryCountWrite.setValue(false);
       }
       if (!Options.nurseryCountWrite.getValue())
-        counterSpace.populateCounters(totalMemory());
+        counterSpace.populateCounters(getMaxMemory());
       else
         counterSpace.populateCounters(Extent.fromIntSignExtend(Options.nurserySize.getMaxNursery() << LOG_BYTES_IN_PAGE));
       Space targetSpace = counterSpace.getTargetSpace(null);
@@ -396,7 +394,7 @@ public abstract class Plan {
     // something is wrong, then do not dump counterSpace.
     if (value != 0)
       return;
-    if (Options.gcCountWrite.getValue() || VM.barriers.doesMutatorCountWrite())
+    if (Options.gcCountWrite.getValue() || Options.forceMutatorCountWrite.getValue())
       counterSpace.dumpCounts();
   }
 
@@ -1124,8 +1122,18 @@ public abstract class Plan {
   }
 
   @Inline
+  public void updateWriteCountRange(Address start, Address end, CardTable.Mapper mapper) {
+    counterSpace.updateCounter(start, end, mapper);
+  }
+
+  @Inline
   public void updateWriteCount(Address slot) {
     counterSpace.updateCounter(slot);
+  }
+
+  @Inline
+  public void updateWriteCount(Address slot, CardTable.Mapper mapper) {
+    counterSpace.updateCounter(slot, mapper);
   }
   public boolean hasSemiSpace() {
       return false;

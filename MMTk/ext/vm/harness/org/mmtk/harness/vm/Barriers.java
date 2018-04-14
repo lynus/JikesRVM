@@ -614,10 +614,4 @@ public class Barriers extends org.mmtk.vm.Barriers {
   public void objectArrayStoreNoGCBarrier(Object [] dst, int index, Object value) {
     dst[index] = value;
   }
-
-  @Override
-  public boolean doesMutatorCountWrite() {
-    return false;
-  }
-
 }

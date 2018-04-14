@@ -69,4 +69,5 @@ public final class Options {
   public static XmlStats xmlStats;
   public static GCCountWrite gcCountWrite;
   public static NurseryCountWrite nurseryCountWrite;
+  public static ForceMutatorCountWrite forceMutatorCountWrite;
 }

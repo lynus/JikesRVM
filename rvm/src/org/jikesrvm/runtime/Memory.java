@@ -454,7 +454,7 @@ public class Memory {
    */
   public static void memcopy(Address dst, Address src, int cnt) {
     if (VM.memcopyCount)
-      Selected.Plan.get().updateWriteCountRange(dst, dst.plus(cnt));
+      Selected.Mutator.get().updateWriteCountRange(dst, dst.plus(cnt));
     memcopy(dst, src, Extent.fromIntSignExtend(cnt));
   }
 

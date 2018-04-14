@@ -15,9 +15,12 @@ package org.mmtk.plan.generational;
 import org.mmtk.plan.*;
 import org.mmtk.policy.CopyLocal;
 import org.mmtk.policy.Space;
+import org.mmtk.utility.CardTable;
 import org.mmtk.utility.HeaderByte;
+import org.mmtk.utility.Log;
 import org.mmtk.utility.deque.*;
 import org.mmtk.utility.alloc.Allocator;
+import org.mmtk.utility.options.Options;
 import org.mmtk.utility.statistics.Stats;
 import org.mmtk.vm.VM;
 import static org.mmtk.plan.generational.Gen.USE_OBJECT_BARRIER_FOR_AASTORE;
@@ -55,7 +58,7 @@ import org.vmmagic.unboxed.*;
   private final ObjectReferenceDeque modbuf;    /* remember modified scalars */
   protected final WriteBuffer remset;           /* remember modified array fields */
   protected final AddressPairDeque arrayRemset; /* remember modified array ranges */
-
+  protected final WriteBuffer topCard;
   /****************************************************************************
    *
    * Initialization
@@ -73,6 +76,8 @@ import org.vmmagic.unboxed.*;
     modbuf = new ObjectReferenceDeque("modbuf", global().modbufPool);
     remset = new WriteBuffer(global().remsetPool);
     arrayRemset = new AddressPairDeque(global().arrayRemsetPool);
+    cardTable = new CardTable(this);
+    topCard = new WriteBuffer(global().topCardPool);
   }
 
   /****************************************************************************
@@ -141,6 +146,25 @@ import org.vmmagic.unboxed.*;
     }
   }
 
+  @Override
+  @Inline
+  public void intWriteCount(Address slot) {
+    if (Options.forceMutatorCountWrite.getValue()) {
+      if (VM.VERIFY_ASSERTIONS) VM.assertions._assert(!Options.gcCountWrite.getValue());
+      VM.activePlan.global().updateWriteCount(slot, global().cardTableMapper);
+    }
+    cardTable.inc(slot);
+  }
+
+  @Override
+  @Inline
+  public void updateWriteCountRange(Address start, Address end) {
+    if (Options.forceMutatorCountWrite.getValue()) {
+      if (VM.VERIFY_ASSERTIONS) VM.assertions._assert(!Options.gcCountWrite.getValue());
+      VM.activePlan.global().updateWriteCountRange(start, end, global().cardTableMapper);
+    }
+    cardTable.inc(start, end);
+  }
   /**
    * {@inheritDoc}<p>
    *
@@ -253,6 +277,24 @@ import org.vmmagic.unboxed.*;
   public void collectionPhase(short phaseId, boolean primary) {
 
     if (phaseId == Gen.PREPARE) {
+      if (cardTable.writeCount > 10000L) {
+        int hottest = cardTable.findHottest(topCard);
+//        Log.write("count mutator id: ");
+//        Log.write(getId());
+//        Log.write(" write count ");
+//        Log.write(cardTable.writeCount);
+//        Log.write(", found qualified # ");
+//        Log.write(hottest);
+//        Log.write(", min count: ");
+//        Log.writeln(cardTable.min);
+
+        //only clear card table when heap endured a lot of writes.
+        cardTable.clearCardTable();
+        topCard.flushLocal();
+      }
+      cardTable.writeCount = 0L;
+
+
       nursery.reset();
       if (global().traceFullHeap()) {
         super.collectionPhase(phaseId, primary);

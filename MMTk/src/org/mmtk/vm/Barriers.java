@@ -432,6 +432,4 @@ public abstract class Barriers {
    * @param value the new value for the element
    */
   public abstract void objectArrayStoreNoGCBarrier(Object [] dst, int index, Object value);
-
-  public abstract boolean doesMutatorCountWrite();
 }

@@ -682,9 +682,4 @@ public class Barriers extends org.mmtk.vm.Barriers {
       dst[index] = value;
     }
   }
-
-  @Override
-  public final boolean doesMutatorCountWrite() {
-    return org.jikesrvm.VM.forceMutatorCountWrite;
-  }
 }

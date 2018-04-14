@@ -18,6 +18,7 @@ import org.mmtk.plan.*;
 import org.mmtk.policy.CopySpace;
 import org.mmtk.policy.Space;
 
+import org.mmtk.utility.CardTable;
 import org.mmtk.utility.deque.*;
 import org.mmtk.utility.heap.VMRequest;
 import org.mmtk.utility.heap.layout.HeapLayout;
@@ -131,7 +132,9 @@ public abstract class Gen extends StopTheWorld {
   public final SharedDeque modbufPool = new SharedDeque("modBufs",metaDataSpace, 1);
   public final SharedDeque remsetPool = new SharedDeque("remSets",metaDataSpace, 1);
   public final SharedDeque arrayRemsetPool = new SharedDeque("arrayRemSets",metaDataSpace, 2);
-
+  public final SharedDeque topCardPool = new SharedDeque("topCards", metaDataSpace, 1);
+  public final AddressDeque cardReader = new AddressDeque("cardreader", topCardPool);
+  public final CardTable.Mapper cardTableMapper = new CardTable.Mapper();
   /*
    * Class initializer
    */
@@ -175,6 +178,13 @@ public abstract class Gen extends StopTheWorld {
     }
 
     if (phaseId == PREPARE) {
+      topCardPool.prepareNonBlocking();
+      while (!cardReader.isEmpty()) {
+        int card = cardReader.pop().toInt();
+        cardTableMapper.map(card);
+      }
+      cardTableMapper.printSummery();
+      cardTableMapper.prepare();
       nurserySpace.prepare(true);
       if (traceFullHeap()) {
         if (gcFullHeap) {

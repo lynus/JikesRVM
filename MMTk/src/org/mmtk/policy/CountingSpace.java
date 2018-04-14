@@ -1,7 +1,7 @@
 package org.mmtk.policy;
 
-import org.mmtk.plan.Plan;
 import org.mmtk.plan.TransitiveClosure;
+import org.mmtk.utility.CardTable;
 import org.mmtk.utility.Conversions;
 import org.mmtk.utility.FileLog;
 import org.mmtk.utility.Log;
@@ -20,6 +20,7 @@ import org.vmmagic.unboxed.*;
     private Extent length;
     private Extent highWaterMark;
     public Space targetSpace;
+    private Address targetSpaceBase;
     public CountingSpace(String name, VMRequest vmRequest) {
         super(name, false, true, true, vmRequest);
         pr = new CountingPageResource(this, start);
@@ -49,6 +50,7 @@ import org.vmmagic.unboxed.*;
         if (pr.getNewPages(pages, pages, true).isZero())
             return false;
         this.length = len;
+        highWaterMark = len;
         if(Options.verbose.getValue() > 1)
             Log.writeln("Counting space initial length: ", length);
         return true;
@@ -111,7 +113,7 @@ import org.vmmagic.unboxed.*;
             }
             if (!getNursery && name != "boot" && name != "immortal" && name != "meta" && name != "los" &&
                     name != "sanity" && name != "non-moving" && name != "sm-code" && name != "lg-code" &&
-                    name != "vm" && name != "write-counter" && name != "nursery") {
+                    name != "vm" && name != "write-counter" && name != "nursery" && name != "cardtable") {
                 if (excludeName != null && name == excludeName)
                     continue;
                 ret = sp;
@@ -128,27 +130,17 @@ import org.vmmagic.unboxed.*;
             Log.writeln("failed to get target space!");
         }
         targetSpace = ret;
+        targetSpaceBase = ((Map64)HeapLayout.vmMap).getSpaceBaseAddress(targetSpace);
         return ret;
     }
     public void updateCounter(Address start, Address end) {
         if (!isInSpace(targetSpace.getDescriptor(), start)
             || !isInSpace(targetSpace.getDescriptor(), end))
             return;
-        if (Options.verbose.getValue() > 4) {
-            Log.write("updateCount [");
-            Log.write(start);
-            Log.write(", ");
-            Log.write(end);
-            Log.writeln(']');
-        }
-        Address base = ((Map64) HeapLayout.vmMap).getSpaceBaseAddress(targetSpace);
         start = start.toWord().and(Word.fromIntSignExtend(~7)).toAddress();
         end = end.plus(7).toWord().and(Word.fromIntSignExtend(~7)).toAddress();
-        Offset from = start.diff(base);
-        end  = this.start.plus(end.diff(base));
-        if (VM.VERIFY_ASSERTIONS) {
-            VM.assertions._assert(end.LE(this.start.plus(length)));
-        }
+        Offset from = start.diff(targetSpaceBase);
+        end  = this.start.plus(end.diff(targetSpaceBase));
         Address addr = this.start.plus(from);
         do {
             long val = addr.loadLong();
@@ -157,8 +149,31 @@ import org.vmmagic.unboxed.*;
             addr = addr.plus(8);
         } while (addr.LT(end));
     }
+
+    @Inline
+    private void _updateCounter(Offset offset) {
+        offset = offset.toWord().and(Word.fromIntSignExtend(~7)).toOffset();
+        Address addr = this.start.plus(offset);
+        long val = addr.loadLong();
+        val++;
+        addr.store(val);
+    }
+
     @Inline
     public void updateCounter(Address slot) {
+        if (slot.isZero()) {
+            Log.writeln("updateCounter encounter Zero slot!");
+            return;
+        }
+        if (!isInSpace(targetSpace.getDescriptor(), slot)) {
+            return;
+        }
+        Offset offset = slot.diff(targetSpaceBase);
+        _updateCounter(offset);
+    }
+
+    @Inline
+    public void updateCounter(Address slot, CardTable.Mapper mapper) {
         if (slot.isZero()) {
             Log.writeln("updateCounter encounter Zero slot!");
             return;
@@ -170,24 +185,24 @@ import org.vmmagic.unboxed.*;
             Log.write("updateCounter slot:");
             Log.writeln(slot);
         }
-        Address base = ((Map64) HeapLayout.vmMap).getSpaceBaseAddress(targetSpace);
-        slot = slot.toWord().and(Word.fromIntSignExtend(~7)).toAddress();
-        Address addr = this.start.plus(slot.diff(base));
-        if (addr.GT(start.plus(length))) {
-            Log.write("updateCounter is going to write beyond counting space range: ");
-            Log.write("slot: ", slot);
-            Log.write("  targetspace base: ", base);
-            Log.writeln(" counterspace start: ", this.start);
-            Log.flush();
-            VM.assertions.fail("stop at updatecounter.");
+        Offset offset = slot.diff(targetSpaceBase);
+        Offset to = mapper.translate(offset);
+        _updateCounter(to);
+    }
+
+    @Inline
+    public void updateCounter(Address start, Address end, CardTable.Mapper mapper) {
+        if (!isInSpace(targetSpace.getDescriptor(), start)
+            || !isInSpace(targetSpace.getDescriptor(), end))
+            return;
+        Address addr = start;
+        Offset offset, to;
+        while (addr.LT(end)) {
+            offset = addr.diff(targetSpaceBase);
+            to = mapper.translate(offset);
+            _updateCounter(to);
+            addr = addr.plus(8);
         }
-        long val = addr.loadLong();
-        val++;
-        if (val == 0) {
-            Log.write("updateCounter overflow slot: ");
-            Log.writeln(slot);
-        }
-        addr.store(val);
     }
     public void dumpCounts() {
         if (Options.verbose.getValue() > 1) {
