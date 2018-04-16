@@ -152,6 +152,8 @@ import org.vmmagic.unboxed.*;
 
     @Inline
     private void _updateCounter(Offset offset) {
+        if (offset == Offset.fromIntSignExtend(-1))
+            return;
         offset = offset.toWord().and(Word.fromIntSignExtend(~7)).toOffset();
         Address addr = this.start.plus(offset);
         long val = addr.loadLong();

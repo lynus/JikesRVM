@@ -149,6 +149,10 @@ import org.vmmagic.unboxed.*;
   @Override
   @Inline
   public void intWriteCount(Address slot) {
+    if (!Options.wearLevel.getValue()) {
+      super.intWriteCount(slot);
+      return;
+    }
     if (Options.forceMutatorCountWrite.getValue()) {
       if (VM.VERIFY_ASSERTIONS) VM.assertions._assert(!Options.gcCountWrite.getValue());
       VM.activePlan.global().updateWriteCount(slot, global().cardTableMapper);
@@ -159,6 +163,10 @@ import org.vmmagic.unboxed.*;
   @Override
   @Inline
   public void updateWriteCountRange(Address start, Address end) {
+    if (!Options.wearLevel.getValue()) {
+      super.updateWriteCountRange(start, end);
+      return;
+    }
     if (Options.forceMutatorCountWrite.getValue()) {
       if (VM.VERIFY_ASSERTIONS) VM.assertions._assert(!Options.gcCountWrite.getValue());
       VM.activePlan.global().updateWriteCountRange(start, end, global().cardTableMapper);
@@ -277,18 +285,8 @@ import org.vmmagic.unboxed.*;
   public void collectionPhase(short phaseId, boolean primary) {
 
     if (phaseId == Gen.PREPARE) {
-      if (cardTable.writeCount > 10000L) {
+      if (Options.wearLevel.getValue() && cardTable.writeCount > 1L) {
         int hottest = cardTable.findHottest(topCard);
-//        Log.write("count mutator id: ");
-//        Log.write(getId());
-//        Log.write(" write count ");
-//        Log.write(cardTable.writeCount);
-//        Log.write(", found qualified # ");
-//        Log.write(hottest);
-//        Log.write(", min count: ");
-//        Log.writeln(cardTable.min);
-
-        //only clear card table when heap endured a lot of writes.
         cardTable.clearCardTable();
         topCard.flushLocal();
       }

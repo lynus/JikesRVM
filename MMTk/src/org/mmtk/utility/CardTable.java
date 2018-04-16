@@ -16,15 +16,17 @@ import org.vmmagic.unboxed.Offset;
 import static org.mmtk.policy.Space.isInSpace;
 
 @Uninterruptible public class CardTable {
-  protected static final int NUM_HOTTEST_CARD = 512;
+  protected static final int NUM_HOTTEST_CARD = 1024;
   protected static final double THRESHOLD_RATE = 0.5;
   private static final int LOG_MAX_NUM_CARDS = 20;
+  private static final long TOO_HOT_COUNT_THRESHOLD = 10000L;
   protected static int NUM_CARDS;
   private static Lock lock;
   private static final int LOG_CARD_UNIT = 13; //8K
   private static final int LOG_CARD_SIZE = 3;
   private static Space targetSpace;
   private static Address targetSpaceBase = Address.zero();
+  private static Mapper mapper;
   private MutatorContext mutator;
   private Address start;
   public long writeCount;
@@ -99,6 +101,11 @@ import static org.mmtk.policy.Space.isInSpace;
   }
 
   @Inline
+  private long max(long x, long y) {
+    return x > y ? x : y;
+  }
+
+  @Inline
   public void inc(Address start, Address end) {
     if (!isInSpace(targetSpace.getDescriptor(), start)
         || !isInSpace(targetSpace.getDescriptor(), end))
@@ -129,9 +136,17 @@ import static org.mmtk.policy.Space.isInSpace;
     int ret = 0;
     long min = 999999L;
     long threshold = (long)(writeCount * THRESHOLD_RATE / NUM_HOTTEST_CARD);
+    threshold = max(threshold, 100);
+    Log.write("findHottest() select threshold: ");
+    Log.writeln(threshold);
     long val;
     for (int i = 0; i < NUM_CARDS; i++) {
-     val = start.plus(i << LOG_CARD_SIZE).loadLong();
+      val = start.plus(i << LOG_CARD_SIZE).loadLong();
+      if (val >= TOO_HOT_COUNT_THRESHOLD) {
+        mapper.mapToDRAM(i);
+        continue;
+      }
+
       if (val >= threshold) {
         buffer.insert(Address.fromIntZeroExtend(i));
         ret++;
@@ -179,10 +194,12 @@ import static org.mmtk.policy.Space.isInSpace;
     }
   }
   @Uninterruptible public static class Mapper {
-    private final int LOG_ELEMENT_SIZE = 2; // 4bytes
-    private final int MARK_SHIFT = LOG_MAX_NUM_CARDS;
-    private final int MARK_MASK = ~((1 << MARK_SHIFT) -1);
-    private final long OFFSET_MASK = (1L << LOG_CARD_UNIT) - 1L;
+    private static final int LOG_ELEMENT_SIZE = 2; // 4bytes
+    private static final int MARK_SHIFT = LOG_MAX_NUM_CARDS;
+    private static final int MARK_MASK = ~((1 << MARK_SHIFT) -1);
+    private static final long OFFSET_MASK = (1L << LOG_CARD_UNIT) - 1L;
+    private static final int MARK_TODRAM = 1 << 31;
+    private static int numDRAM = 0;
     private int currentMapMark;
 
     private int calledTimes;
@@ -200,6 +217,7 @@ import static org.mmtk.policy.Space.isInSpace;
         write(i, i);
       }
       rand.init();
+      mapper = this;
     }
     public void prepare() {
       calledTimes = 0;
@@ -221,6 +239,18 @@ import static org.mmtk.policy.Space.isInSpace;
       start.plus(card << LOG_ELEMENT_SIZE).store(val);
     }
 
+    private void mapToDRAM(int card) {
+      if (isInDRAM(card))
+        return;
+      write(card, MARK_TODRAM);
+      numDRAM++;
+    }
+
+    @Inline
+    private boolean isInDRAM(int card) {
+      return (read(card) == MARK_TODRAM);
+    }
+
     //before: card-->X     to-->Y
     //after:  card-->Y     to-->X
     public int map(int card) {
@@ -229,19 +259,16 @@ import static org.mmtk.policy.Space.isInSpace;
       calledTimes++;
       int to, X, Y;
       X = read(card);
+      if (X == MARK_TODRAM) {
+        return -1;
+      }
       if ((X & MARK_MASK) == currentMapMark) {
-//        Log.write("CardTable:map() card ");
-//        Log.write(card);
-//        Log.writeln(" already mapped. skip");
         return -1;
       }
       mapTimes++;
       to = rand.nextInt(NUM_CARDS);
       Y = read(to);
-      while ((Y & MARK_MASK) == currentMapMark) {
-//        Log.write("CardTable:map() card ");
-//        Log.write(to);
-//        Log.writeln("has been mapped by previous map. retry");
+      while ((Y & MARK_MASK) == currentMapMark || Y == MARK_TODRAM) {
         to = rand.nextInt(NUM_CARDS);
         Y = read(to);
         randomRetries++;
@@ -260,6 +287,8 @@ import static org.mmtk.policy.Space.isInSpace;
         init();
       int card = (int)(slot.toLong() >> LOG_CARD_UNIT);
       int to = read(card);
+      if (to == MARK_TODRAM)
+        return Offset.fromIntSignExtend(-1);
       to = to & (~MARK_MASK);
       long base = (long)(to << LOG_CARD_UNIT);
       return Offset.fromLong(base + (slot.toLong() & OFFSET_MASK));
@@ -270,8 +299,8 @@ import static org.mmtk.policy.Space.isInSpace;
       Log.write(calledTimes);
       Log.write(" mapTimes ");
       Log.write(mapTimes);
-      Log.write(" random retries ");
-      Log.writeln(randomRetries);
+      Log.write(" mapToDRAM ");
+      Log.writeln(numDRAM);
     }
   }
 

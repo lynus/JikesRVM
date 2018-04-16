@@ -175,6 +175,8 @@ public abstract class Plan {
     Options.gcCountWrite = new GCCountWrite();
     Options.nurseryCountWrite = new NurseryCountWrite();
     Options.forceMutatorCountWrite = new ForceMutatorCountWrite();
+    Options.wearLevel = new WearLevel();
+
     HeapLayout.vmMap.finalizeStaticSpaceMap();
     registerSpecializedMethods();
 

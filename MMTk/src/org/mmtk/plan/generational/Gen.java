@@ -178,13 +178,15 @@ public abstract class Gen extends StopTheWorld {
     }
 
     if (phaseId == PREPARE) {
-      topCardPool.prepareNonBlocking();
-      while (!cardReader.isEmpty()) {
-        int card = cardReader.pop().toInt();
-        cardTableMapper.map(card);
+      if (Options.wearLevel.getValue()) {
+        topCardPool.prepareNonBlocking();
+        while (!cardReader.isEmpty()) {
+          int card = cardReader.pop().toInt();
+          int to = cardTableMapper.map(card);
+        }
+        cardTableMapper.printSummery();
+        cardTableMapper.prepare();
       }
-      cardTableMapper.printSummery();
-      cardTableMapper.prepare();
       nurserySpace.prepare(true);
       if (traceFullHeap()) {
         if (gcFullHeap) {
