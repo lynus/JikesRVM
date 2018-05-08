@@ -283,16 +283,15 @@ import org.vmmagic.unboxed.*;
   @Override
   @NoInline
   public void collectionPhase(short phaseId, boolean primary) {
-
-    if (phaseId == Gen.PREPARE) {
-      if (Options.wearLevel.getValue() && cardTable.writeCount > 1L) {
-        int hottest = cardTable.findHottest(topCard);
-        cardTable.clearCardTable();
+    if (phaseId == Gen.SCANCARDTABLE) {
+      if (cardTable.writeCount > 0) {
+        cardTable.findHottest_1(topCard);
         topCard.flushLocal();
+        cardTable.writeCount = 0L;
       }
-      cardTable.writeCount = 0L;
-
-
+      return;
+    }
+    if (phaseId == Gen.PREPARE) {
       nursery.reset();
       if (global().traceFullHeap()) {
         super.collectionPhase(phaseId, primary);

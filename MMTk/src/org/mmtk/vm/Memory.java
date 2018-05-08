@@ -134,6 +134,8 @@ import org.vmmagic.pragma.*;
   @Inline
   public abstract void combinedLoadBarriers();
 
+  @Inline
+  public abstract void pageCopy(Address dst, Address src, int pages);
   /*
    * NOTE: The following methods must be implemented by subclasses of this
    * class, but are internal to the VM<->MM interface glue, so are never

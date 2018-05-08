@@ -42,7 +42,7 @@ public class Stats {
   public static final boolean GATHER_MARK_CONS_STATS = false;
 
   /** Maximum number of gc/mutator phases that can be counted */
-  static final int MAX_PHASES = 1 << 12;
+  static final int MAX_PHASES = 1 << 14;
   /** Maximum number of counters that can be in operation */
   static final int MAX_COUNTERS = 100;
 

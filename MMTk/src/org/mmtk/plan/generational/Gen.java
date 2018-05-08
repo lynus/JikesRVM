@@ -155,6 +155,12 @@ public abstract class Gen extends StopTheWorld {
     }
   }
 
+  public static final short SCANCARDTABLE = Phase.createSimple("scan-cardtable");
+  public static final short MAPCARD = Phase.createSimple("map-card");
+  public static final short WEARLEVEL = Phase.createComplex("wearlevel", null,
+      Phase.scheduleMutator(SCANCARDTABLE),
+      Phase.scheduleGlobal(MAPCARD));
+
   /*****************************************************************************
    *
    * Collection
@@ -171,6 +177,16 @@ public abstract class Gen extends StopTheWorld {
   @Override
   @NoInline
   public void collectionPhase(short phaseId) {
+    if (phaseId == MAPCARD) {
+      topCardPool.prepareNonBlocking();
+      while (!cardReader.isEmpty()) {
+        int card = cardReader.pop().toInt();
+        int to = cardTableMapper.map(card);
+      }
+      cardTableMapper.prepare();
+      Log.writeln();
+      return;
+    }
     if (phaseId == SET_COLLECTION_KIND) {
       super.collectionPhase(phaseId);
       gcFullHeap = requiresFullHeapCollection();
@@ -178,15 +194,6 @@ public abstract class Gen extends StopTheWorld {
     }
 
     if (phaseId == PREPARE) {
-      if (Options.wearLevel.getValue()) {
-        topCardPool.prepareNonBlocking();
-        while (!cardReader.isEmpty()) {
-          int card = cardReader.pop().toInt();
-          int to = cardTableMapper.map(card);
-        }
-        cardTableMapper.printSummery();
-        cardTableMapper.prepare();
-      }
       nurserySpace.prepare(true);
       if (traceFullHeap()) {
         if (gcFullHeap) {
@@ -221,6 +228,8 @@ public abstract class Gen extends StopTheWorld {
       modbufPool.clearDeque(1);
       remsetPool.clearDeque(1);
       arrayRemsetPool.clearDeque(2);
+      if (Options.wearLevel.getValue())
+        topCardPool.clearDeque(1);
       if (!traceFullHeap()) {
         nurseryTrace.release();
       } else {
@@ -461,5 +470,24 @@ public abstract class Gen extends StopTheWorld {
   @Override
   public boolean isGenerational() {
     return true;
+  }
+
+  @Override
+  @Interruptible
+  public final void notifyExit(int value) {
+    super.notifyExit(value);
+    cardTableMapper.printSummery(Stats.gcCount());
+  }
+
+  @Override
+  @Interruptible
+  public void processOptions() {
+    super.processOptions();
+
+    if (Options.wearLevel.getValue()) {
+      cardTableMapper.init();
+      insertPhaseAfter(Phase.scheduleComplex(completeClosurePhase),
+          Phase.scheduleComplex(WEARLEVEL));
+    }
   }
 }

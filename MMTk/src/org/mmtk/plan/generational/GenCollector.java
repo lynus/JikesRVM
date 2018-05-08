@@ -16,6 +16,7 @@ import org.mmtk.plan.*;
 import org.mmtk.policy.LargeObjectLocal;
 import org.mmtk.utility.deque.*;
 
+import org.mmtk.utility.options.Options;
 import org.mmtk.vm.VM;
 
 import org.vmmagic.pragma.*;
@@ -116,6 +117,8 @@ import org.vmmagic.pragma.*;
     }
 
     if (phaseId == Gen.RELEASE) {
+      if (Options.wearLevel.getValue())
+        global().topCardPool.reset();
       los.release(true);
       if (!global().traceFullHeap()) {
         nurseryTrace.release();

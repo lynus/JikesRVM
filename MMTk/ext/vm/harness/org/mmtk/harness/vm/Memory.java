@@ -154,6 +154,9 @@ public class Memory extends org.mmtk.vm.Memory {
     // Nothing required
   }
 
+  @Override
+  public void pageCopy(Address dst, Address src, int pages) {}
+
   /** {@inheritDoc} */
   @Override
   @Inline

@@ -21,6 +21,7 @@ import static org.jikesrvm.runtime.JavaSizeConstants.LOG_BYTES_IN_LONG;
 import static org.jikesrvm.runtime.UnboxedSizeConstants.LOG_BYTES_IN_ADDRESS;
 import static org.jikesrvm.runtime.UnboxedSizeConstants.LOG_BYTES_IN_WORD;
 import static org.mmtk.utility.Constants.LOG_BYTES_IN_MBYTE;
+import static org.mmtk.utility.Constants.LOG_BYTES_IN_PAGE;
 import static org.mmtk.utility.heap.layout.VMLayoutConstants.BYTES_IN_CHUNK;
 
 import org.jikesrvm.HeapLayoutConstants;
@@ -211,5 +212,11 @@ import org.vmmagic.unboxed.Offset;
   @Inline
   public final void combinedLoadBarriers() {
     Magic.combinedLoadBarrier();
+  }
+
+  @Override
+  @Inline
+  public void pageCopy(Address dst, Address src, int pages) {
+    org.jikesrvm.runtime.Memory.memcopy(dst, src, Extent.fromIntZeroExtend(pages << LOG_BYTES_IN_PAGE));
   }
 }
