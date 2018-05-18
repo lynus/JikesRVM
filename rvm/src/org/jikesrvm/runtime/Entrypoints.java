@@ -309,9 +309,9 @@ public class Entrypoints {
   public static final NormalMethod intArrayWriteBarrierMethod =
     getMethod(org.jikesrvm.mm.mminterface.Barriers.class, "intArrayWrite", "([III)V");
   public static final NormalMethod ArrayWriteCountMethod =
-      getMethod(org.jikesrvm.mm.mminterface.Barriers.class, "arrayWriteCount", "([III)V");
+      getMethod(org.jikesrvm.mm.mminterface.Barriers.class, "arrayWriteCount", "([IIII)V");
   public static final NormalMethod FieldWriteCountMethod =
-      getMethod(org.jikesrvm.mm.mminterface.Barriers.class, "fieldWriteCount", "(Ljava/lang/Object;I)V");
+      getMethod(org.jikesrvm.mm.mminterface.Barriers.class, "fieldWriteCount", "(Ljava/lang/Object;II)V");
   public static final NormalMethod intFieldReadBarrierMethod =
     getMethod(org.jikesrvm.mm.mminterface.Barriers.class, "intFieldRead", "(Ljava/lang/Object;Lorg/vmmagic/unboxed/Offset;I)I");
   public static final NormalMethod intArrayReadBarrierMethod =

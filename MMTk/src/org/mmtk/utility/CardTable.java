@@ -13,22 +13,25 @@ import org.vmmagic.pragma.Uninterruptible;
 import org.vmmagic.unboxed.Address;
 import org.vmmagic.unboxed.Extent;
 import org.vmmagic.unboxed.Offset;
+
+import static org.mmtk.plan.generational.MyConfig.MAPTOOHOT;
+import static org.mmtk.plan.generational.MyConfig.MONITORTYPE;
+import static org.mmtk.plan.generational.MyConfig.WRITETYPE_ALL;
 import static org.mmtk.policy.Space.isInSpace;
 
 @Uninterruptible public class CardTable {
   protected static final int NUM_HOTTEST_CARD = 1024;
   protected static final double THRESHOLD_RATE = 0.5;
   private static final int LOG_MAX_NUM_CARDS = 20;
-  private static final boolean ENABLE_HOT_MAP =  true;
   protected static int NUM_CARDS;
   private static final int MAX_SELECT_CARD = 50;  // findhottest() only selects this many cards
-  private static final long TOO_HOT_COUNT_THRESHOLD = 10000L;
-  private static final long MIN_SELECTED_CARD_COUNT = 1000; //selected card's write count be greater than this
+  private static final long TOO_HOT_COUNT_THRESHOLD = MONITORTYPE != WRITETYPE_ALL? 5000L:10000L;
+  private static final long MIN_SELECTED_CARD_COUNT = MONITORTYPE != WRITETYPE_ALL?10:1000; //selected card's write count be greater than this
   private static Lock lock;
   private static final int LOG_CARD_UNIT = 13; //8K
   private static final int LOG_CARD_SIZE = 3;
 
-  private static final int LOG_2ND_CARD_UNIT = 9;   //each 2nd card correspond to 512 1st card, aka 4M heap
+  private static final int LOG_2ND_CARD_UNIT = 4;   //each 2nd card correspond to 512 1st card, aka 4M heap
   private static final int LOG_2ND_CARD_SIZE = 0;   //echo 2nd card element is 1 byte
   private static final byte DIRTY = 1;
   private static final byte CLEAN = 0;
@@ -92,14 +95,14 @@ import static org.mmtk.policy.Space.isInSpace;
       if (NUM_CARDS >= 1 << LOG_MAX_NUM_CARDS)
         VM.assertions.fail("NUM CARDS too large!");
     }
-    Address ret = Plan.cardTableSpace.acquire(Conversions.bytesToPagesUp(Extent.fromIntZeroExtend(NUM_CARDS << log_size)));
+    Address ret = Plan.cardTableSpace.allocPages(Conversions.bytesToPagesUp(Extent.fromIntZeroExtend(NUM_CARDS << log_size)));
     if (VM.VERIFY_ASSERTIONS)
       VM.assertions._assert(!ret.isZero());
     return ret;
   }
 
   private void initCandidateArray() {
-    candidateStart = Plan.cardTableSpace.acquire((Conversions.bytesToPagesUp(Extent.fromIntZeroExtend(MAX_SELECT_CARD << 2))));
+    candidateStart = Plan.cardTableSpace.allocPages((Conversions.bytesToPagesUp(Extent.fromIntZeroExtend(MAX_SELECT_CARD << 2))));
     if (VM.VERIFY_ASSERTIONS)
       VM.assertions._assert(!candidateStart.isZero());
   }
@@ -251,7 +254,7 @@ import static org.mmtk.policy.Space.isInSpace;
         val = addr.loadLong();
         if (val != 0)
           nonzero++;
-        if (ENABLE_HOT_MAP && val >= TOO_HOT_COUNT_THRESHOLD) {
+        if (MAPTOOHOT && val >= TOO_HOT_COUNT_THRESHOLD) {
           mapper.mapToDRAM(i);
           continue;
         }
@@ -350,16 +353,19 @@ import static org.mmtk.policy.Space.isInSpace;
     private int randomRetries;
 
     private Address start = Address.zero();
-    private Address exchange = Address.zero();
+    private Address exchange1 = Address.zero();
+    private Address exchange2 = Address.zero();
     private Random rand = new Random();
     public boolean ready = false;
     public void init() {
       this.start = getPages(LOG_ELEMENT_SIZE);
-      if (VM.VERIFY_ASSERTIONS)
+
+      this.exchange1 = Plan.cardTableSpace.allocPages(20);
+      this.exchange2 = Plan.cardTableSpace.allocPages(20);
+      if (VM.VERIFY_ASSERTIONS) {
         VM.assertions._assert(!start.isZero());
-      this.exchange = Plan.cardTableSpace.acquire(1);
-      Log.write("get exchange ");
-      Log.writeln(exchange);
+        VM.assertions._assert(!exchange1.isZero() && !exchange2.isZero());
+      }
       for (int i = 0; i < NUM_CARDS; i++) {
         write(i, i);
       }
@@ -421,9 +427,8 @@ import static org.mmtk.policy.Space.isInSpace;
       Log.write(a);
       Log.write(" b ");
       Log.writeln(b);
-      VM.memory.pageCopy(exchange, a, 1);
-      VM.memory.pageCopy(exchange, b, 1);
-      VM.memory.pageCopy(exchange, a,1);
+      VM.memory.pageCopy(exchange1, a, 20);
+      VM.memory.pageCopy(exchange2, b, 20);
       X = (X & ~MARK_MASK) | currentMapMark;
       Y = (Y & ~MARK_MASK) | currentMapMark;
       write(card, Y);

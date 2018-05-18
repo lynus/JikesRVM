@@ -554,17 +554,17 @@ public class Barriers {
 
   @Inline
   @Entrypoint
-  public static void arrayWriteCount(int[] ref, int index, int logsize) {
+  public static void arrayWriteCount(int[] ref, int index, int logsize, int type) {
     ObjectReference array = ObjectReference.fromObject(ref);
     Offset offset = Offset.fromIntSignExtend(index << logsize);
-    Selected.Mutator.get().intWriteCount(array.toAddress().plus(offset));
+    Selected.Mutator.get().intWriteCount(array.toAddress().plus(offset), type);
   }
 
   @Inline
   @Entrypoint
-  public static void fieldWriteCount(Object ref, int offset) {
+  public static void fieldWriteCount(Object ref, int offset, int type) {
     ObjectReference obj = ObjectReference.fromObject(ref);
-    Selected.Mutator.get().intWriteCount(obj.toAddress().plus(offset));
+    Selected.Mutator.get().intWriteCount(obj.toAddress().plus(offset), type);
   }
   /**
    * Barrier for loads of ints from fields of instances (i.e. getfield).

@@ -135,6 +135,10 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
   static final Offset THREE_SLOTS = TWO_SLOTS.plus(WORDSIZE);
   static final Offset FOUR_SLOTS = THREE_SLOTS.plus(WORDSIZE);
   static final Offset FIVE_SLOTS = FOUR_SLOTS.plus(WORDSIZE);
+
+  static final int WRITETYPE_REF = 1;
+  static final int WRITETYPE_INT = 2;
+  static final int WRITETYPE_OTHER = 4;
   private static final Offset MINUS_ONE_SLOT = NO_SLOT.minus(WORDSIZE);
 
   /**
@@ -754,6 +758,7 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
         asm.emitPUSH_Reg(GPR.R8);
         asm.emitPUSH_Reg(GPR.R9);
         asm.emitPUSH_Imm(LOG_BYTES_IN_INT);
+        asm.emitPUSH_Imm(WRITETYPE_INT);
         Barriers.compileArrayStoreCount(asm, this);
       }
 
@@ -776,6 +781,7 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
         asm.emitPUSH_Reg(GPR.R8);
         asm.emitPUSH_Reg(GPR.R9);
         asm.emitPUSH_Imm(LOG_BYTES_IN_FLOAT);
+        asm.emitPUSH_Imm(WRITETYPE_OTHER);
         Barriers.compileArrayStoreCount(asm, this);
       }
     }
@@ -800,6 +806,7 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
       asm.emitPUSH_Reg(GPR.R8);
       asm.emitPUSH_Reg(GPR.R9);
       asm.emitPUSH_Imm(LOG_BYTES_IN_ADDRESS);
+      asm.emitPUSH_Imm(WRITETYPE_REF);
       Barriers.compileArrayStoreCount(asm, this);
     }
   }
@@ -820,6 +827,7 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
         asm.emitPUSH_Reg(GPR.R8);
         asm.emitPUSH_Reg(GPR.R9);
         asm.emitPUSH_Imm(LOG_BYTES_IN_CHAR);
+        asm.emitPUSH_Imm(WRITETYPE_OTHER);
         Barriers.compileArrayStoreCount(asm, this);
       }
     }
@@ -841,6 +849,7 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
         asm.emitPUSH_Reg(GPR.R8);
         asm.emitPUSH_Reg(GPR.R9);
         asm.emitPUSH_Imm(LOG_BYTES_IN_SHORT);
+        asm.emitPUSH_Imm(WRITETYPE_OTHER);
         Barriers.compileArrayStoreCount(asm, this);
       }
     }
@@ -862,6 +871,7 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
         asm.emitPUSH_Reg(GPR.R8);
         asm.emitPUSH_Reg(GPR.R9);
         asm.emitPUSH_Imm(LOG_BYTES_IN_BYTE);
+        asm.emitPUSH_Imm(WRITETYPE_OTHER);
         Barriers.compileArrayStoreCount(asm, this);
       }
     }
@@ -883,6 +893,7 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
         asm.emitPUSH_Reg(GPR.R8);
         asm.emitPUSH_Reg(GPR.R9);
         asm.emitPUSH_Imm(LOG_BYTES_IN_LONG);
+        asm.emitPUSH_Imm(WRITETYPE_OTHER);
         Barriers.compileArrayStoreCount(asm, this);
       }
     }
@@ -904,6 +915,7 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
         asm.emitPUSH_Reg(GPR.R8);
         asm.emitPUSH_Reg(GPR.R9);
         asm.emitPUSH_Imm(LOG_BYTES_IN_DOUBLE);
+        asm.emitPUSH_Imm(WRITETYPE_OTHER);
         Barriers.compileArrayStoreCount(asm, this);
       }
     }
@@ -2899,6 +2911,12 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
     if (enableWriteCount()) {
       asm.emitPUSH_Reg(GPR.R8);
       asm.emitPUSH_Reg(GPR.R9);
+      if (fieldType.isReferenceType())
+        asm.emitPUSH_Imm(WRITETYPE_REF);
+      else if (fieldType.isIntType())
+        asm.emitPUSH_Imm(WRITETYPE_INT);
+      else
+        asm.emitPUSH_Imm(WRITETYPE_OTHER);
       Barriers.compileFieldStoreCount(asm, this);
     }
   }
@@ -3004,6 +3022,12 @@ public final class BaselineCompilerImpl extends BaselineCompiler {
     if (enableWriteCount()) {
       asm.emitPUSH_Reg(GPR.R8);
       asm.emitPUSH_Reg(GPR.R9);
+      if (fieldType.isReferenceType())
+        asm.emitPUSH_Imm(WRITETYPE_REF);
+      else if (fieldType.isIntType())
+        asm.emitPUSH_Imm(WRITETYPE_INT);
+      else
+        asm.emitPUSH_Imm(WRITETYPE_OTHER);
       Barriers.compileFieldStoreCount(asm, this);
     }
   }

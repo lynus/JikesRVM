@@ -150,6 +150,10 @@ import org.vmmagic.unboxed.*;
         } while (addr.LT(end));
     }
 
+    public Address allocPages(int pages) {
+        return pr.getNewPages(pages, pages, true);
+    }
+
     @Inline
     private void _updateCounter(Offset offset) {
         if (offset.EQ(Offset.fromIntSignExtend(-1)))

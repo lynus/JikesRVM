@@ -17,7 +17,6 @@ import org.mmtk.policy.CopyLocal;
 import org.mmtk.policy.Space;
 import org.mmtk.utility.CardTable;
 import org.mmtk.utility.HeaderByte;
-import org.mmtk.utility.Log;
 import org.mmtk.utility.deque.*;
 import org.mmtk.utility.alloc.Allocator;
 import org.mmtk.utility.options.Options;
@@ -25,8 +24,8 @@ import org.mmtk.utility.statistics.Stats;
 import org.mmtk.vm.VM;
 import static org.mmtk.plan.generational.Gen.USE_OBJECT_BARRIER_FOR_AASTORE;
 import static org.mmtk.plan.generational.Gen.USE_OBJECT_BARRIER_FOR_PUTFIELD;
+import static org.mmtk.plan.generational.MyConfig.*;
 import static org.mmtk.utility.Constants.*;
-
 import org.vmmagic.pragma.*;
 import org.vmmagic.unboxed.*;
 
@@ -148,15 +147,16 @@ import org.vmmagic.unboxed.*;
 
   @Override
   @Inline
-  public void intWriteCount(Address slot) {
+  public void intWriteCount(Address slot, int type) {
     if (!Options.wearLevel.getValue()) {
-      super.intWriteCount(slot);
+      super.intWriteCount(slot, type);
       return;
     }
     if (Options.forceMutatorCountWrite.getValue()) {
       if (VM.VERIFY_ASSERTIONS) VM.assertions._assert(!Options.gcCountWrite.getValue());
       VM.activePlan.global().updateWriteCount(slot, global().cardTableMapper);
     }
+    if ((MONITORTYPE & type) >0)
     cardTable.inc(slot);
   }
 
