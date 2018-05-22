@@ -14,9 +14,7 @@ import org.vmmagic.unboxed.Address;
 import org.vmmagic.unboxed.Extent;
 import org.vmmagic.unboxed.Offset;
 
-import static org.mmtk.plan.generational.MyConfig.MAPTOOHOT;
-import static org.mmtk.plan.generational.MyConfig.MONITORTYPE;
-import static org.mmtk.plan.generational.MyConfig.WRITETYPE_ALL;
+import static org.mmtk.plan.generational.MyConfig.*;
 import static org.mmtk.policy.Space.isInSpace;
 
 @Uninterruptible public class CardTable {
@@ -25,13 +23,13 @@ import static org.mmtk.policy.Space.isInSpace;
   private static final int LOG_MAX_NUM_CARDS = 20;
   protected static int NUM_CARDS;
   private static final int MAX_SELECT_CARD = 50;  // findhottest() only selects this many cards
-  private static final long TOO_HOT_COUNT_THRESHOLD = MONITORTYPE != WRITETYPE_ALL? 5000L:10000L;
-  private static final long MIN_SELECTED_CARD_COUNT = MONITORTYPE != WRITETYPE_ALL?10:1000; //selected card's write count be greater than this
+  private static final long TOO_HOT_COUNT_THRESHOLD = MONITORTYPE != WRITETYPE_ALL? 5000L/SAMPLE_RATE:10000L/SAMPLE_RATE;
+  private static final long MIN_SELECTED_CARD_COUNT = MONITORTYPE != WRITETYPE_ALL?10/SAMPLE_RATE:1000/SAMPLE_RATE; //selected card's write count be greater than this
   private static Lock lock;
   private static final int LOG_CARD_UNIT = 13; //8K
   private static final int LOG_CARD_SIZE = 3;
 
-  private static final int LOG_2ND_CARD_UNIT = 4;   //each 2nd card correspond to 512 1st card, aka 4M heap
+  private static final int LOG_2ND_CARD_UNIT = 6;   //each 2nd card correspond to 512 1st card, aka 4M heap
   private static final int LOG_2ND_CARD_SIZE = 0;   //echo 2nd card element is 1 byte
   private static final byte DIRTY = 1;
   private static final byte CLEAN = 0;
@@ -45,6 +43,7 @@ import static org.mmtk.policy.Space.isInSpace;
   private Random rand;
   public long writeCount;
   public long min;
+  private int sampleIndex = 0;
   public CardTable(MutatorContext mutator) {
     this.mutator = mutator;
     start = Address.zero();
@@ -108,8 +107,12 @@ import static org.mmtk.policy.Space.isInSpace;
   }
   @Inline
   public void inc(Address slot) {
-    if (!slot.isZero()) {
-      if (isInSpace(targetSpace.getDescriptor(), slot)) {
+      sampleIndex = (sampleIndex + 1) % SAMPLE_RATE;
+      if (sampleIndex != 0)
+        return;
+
+      if (slot.GT(Address.fromLong(0x0000120000000000L)) &&
+          slot.LT(Address.fromLong(0x000013ffffffffffL))) {
         if (start.isZero()) {
           init();
         }
@@ -125,7 +128,6 @@ import static org.mmtk.policy.Space.isInSpace;
         int card_2nd = card >> LOG_2ND_CARD_UNIT;
         start_2nd.plus(card_2nd).store(DIRTY);
       }
-    }
   }
 
   @Inline
@@ -449,7 +451,7 @@ import static org.mmtk.policy.Space.isInSpace;
     }
 
     public void printSummery(int gcCount) {
-      if (start != Address.zero()) {
+      if (!start.isZero()) {
         Log.write("CardTable: calledTimes ");
         Log.write(calledTimes);
         Log.write(" mapTimes ");
