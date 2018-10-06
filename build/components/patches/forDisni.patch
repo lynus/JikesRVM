@@ -1,0 +1,30 @@
+--- java/nio/ByteBuffer.java	2010-06-04 03:13:02.000000000 +0800
++++ java/nio/ByteBuffer_new.java	2018-10-06 16:12:55.538771088 +0800
+@@ -39,6 +39,7 @@
+ package java.nio;
+ 
+ import gnu.classpath.Pointer;
++import gnu.classpath.Pointer64;
+ 
+ /**
+  * @since 1.4
+@@ -650,4 +651,8 @@
+             " lim=" + limit () +
+             " cap=" + capacity () + "]";
+   }
++  public long address ()
++  {
++    return ((Pointer64)(this.address)).data;
++  }
+ }
+--- gnu/classpath/Pointer64.java	2010-06-04 03:11:19.000000000 +0800
++++ gnu/classpath/Pointer64_new.java	2018-10-06 16:13:44.522304564 +0800
+@@ -43,7 +43,7 @@
+  */
+ public final class Pointer64 extends Pointer
+ {
+-   final long data;
++   public long data;
+ 
+    public Pointer64(long data)
+    {
