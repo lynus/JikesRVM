@@ -938,4 +938,7 @@ public abstract class RVMType extends AnnotatedElement {
     return referenceOffsets;
   }
 
+  public boolean isRDMAObject() {
+    return hasRDMAAnnotation();
+  }
 }

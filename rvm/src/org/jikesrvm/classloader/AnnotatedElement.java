@@ -364,4 +364,8 @@ public abstract class AnnotatedElement implements java.lang.reflect.AnnotatedEle
   public final boolean hasNonMovingAllocationAnnotation() {
     return isAnnotationDeclared(TypeReference.NonMovingAllocation);
   }
+
+  public final boolean hasRDMAAnnotation() {
+    return isAnnotationDeclared(TypeReference.RDMA);
+  }
 }
