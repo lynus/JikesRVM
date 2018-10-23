@@ -456,7 +456,7 @@ public final class MemoryManager {
         allocator = Plan.ALLOC_NON_REFERENCE;
       }
     }
-    if (type.isNonMoving()) {
+    if (type.isNonMoving() || type.isRDMAObject()) {
       allocator = Plan.ALLOC_NON_MOVING;
     }
     byte[] typeBA = type.getDescriptor().toByteArray();
