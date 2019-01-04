@@ -29,4 +29,5 @@ public abstract class MMTk_Events {
 
   public abstract void heapSizeChanged(Extent heapSize);
 
+  public abstract void notifyRdmaSpaceGrow(Space space, Address start, int pages);
 }

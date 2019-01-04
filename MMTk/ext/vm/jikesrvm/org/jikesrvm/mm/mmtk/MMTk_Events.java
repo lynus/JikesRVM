@@ -13,6 +13,7 @@
 
 package org.jikesrvm.mm.mmtk;
 
+import org.jikesrvm.runtime.Callbacks;
 import org.jikesrvm.scheduler.RVMThread;
 import org.jikesrvm.tuningfork.TraceEngine;
 import org.mmtk.policy.Space;
@@ -68,5 +69,10 @@ public class MMTk_Events extends org.mmtk.vm.MMTk_Events {
   @Override
   public void heapSizeChanged(Extent heapSize) {
     RVMThread.getCurrentFeedlet().addEvent(heapSizeChanged, heapSize.toInt());
+  }
+
+  @Override
+  public void notifyRdmaSpaceGrow(Space space, Address start, int pages) {
+    Callbacks.notifyRdmaSpaceGrow(space, start, pages);
   }
 }

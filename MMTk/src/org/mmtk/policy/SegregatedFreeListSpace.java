@@ -1019,4 +1019,7 @@ public abstract class SegregatedFreeListSpace extends Space {
     Address rtn = EmbeddedMetaData.getMetaDataBase(address);
     return rtn.plus(META_DATA_OFFSET).plus(EmbeddedMetaData.getMetaDataOffset(address, LOG_LIVE_COVERAGE, LOG_BYTES_IN_WORD));
   }
+  public Address getHighWater() {
+    return ((FreeListPageResource)pr).getHighWater();
+  }
 }

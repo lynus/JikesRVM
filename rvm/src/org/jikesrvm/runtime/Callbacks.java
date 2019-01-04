@@ -20,6 +20,8 @@ import org.jikesrvm.classloader.RVMClass;
 import org.jikesrvm.classloader.RVMMethod;
 import org.jikesrvm.classloader.RVMType;
 import org.jikesrvm.scheduler.RVMThread;
+import org.mmtk.policy.Space;
+import org.vmmagic.unboxed.Address;
 
 /**
  * A class for managing various callbacks from the VM.
@@ -1088,6 +1090,29 @@ public final class Callbacks {
     }
   }
 
+  public interface RdmaSpaceGrowMonitor {
+    void notifyRdmaSpaceGrow(Address start, int pages);
+  }
+
+  private static CallbackList rdmaSpaceGrowCallbacks = null;
+  private static Space rdmaSpace = null;
+  //no lock required
+
+  public static void addRdmaSpaceGrowMonitor(Space space, RdmaSpaceGrowMonitor cb) {
+    if (rdmaSpace != null && rdmaSpace != space)
+      return;
+    rdmaSpace = space;
+    rdmaSpaceGrowCallbacks = new CallbackList(cb, rdmaSpaceGrowCallbacks);
+  }
+
+  public static void notifyRdmaSpaceGrow(Space space, Address start, int pages) {
+    if (space == rdmaSpace) {
+      for (CallbackList l = rdmaSpaceGrowCallbacks; l != null; l = l.next) {
+        ((RdmaSpaceGrowMonitor) l.callback).notifyRdmaSpaceGrow(start, pages);
+      }
+    }
+
+  }
   ////////////////////
   // IMPLEMENTATION //
   ////////////////////

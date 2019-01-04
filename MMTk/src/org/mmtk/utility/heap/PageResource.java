@@ -323,4 +323,7 @@ public abstract class PageResource {
   protected final void unlock() {
     lock.release();
   }
+  public Address getStart() {
+    return start;
+  }
 }

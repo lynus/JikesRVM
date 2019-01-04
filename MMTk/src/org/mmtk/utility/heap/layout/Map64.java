@@ -68,6 +68,17 @@ public final class Map64 extends Map {
     this.flMap = new RawMemoryFreeList[HeapParameters.MAX_SPACES];
   }
 
+  @Inline
+  public Address getSpaceBaseAddress(Space sp) {
+    int index = spaceIndex(sp.getStart());
+    return baseAddress.get(index);
+  }
+
+    @Inline
+    public Address getSpaceHighWater(Space space) {
+        int index = spaceIndex(space.getStart());
+        return highWater.get(index);
+    }
   public static int spaceIndex(Address addr) {
     if (addr.GT(HEAP_END)) {
       return -1;

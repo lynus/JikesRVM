@@ -180,6 +180,7 @@ public final class FreeListPageResource extends PageResource {
       // The meta-data portion of reserved Pages was committed above.
       commitPages(reservedPages, requiredPages);
       space.growSpace(rtn, bytes, newChunk);
+      VM.events.notifyRdmaSpaceGrow(space, rtn, requiredPages);
       unlock();
       HeapLayout.mmapper.ensureMapped(rtn, requiredPages);
       if (zeroed)

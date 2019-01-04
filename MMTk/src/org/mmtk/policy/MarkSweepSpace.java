@@ -15,6 +15,7 @@ package org.mmtk.policy;
 import static org.mmtk.utility.Constants.*;
 
 import org.mmtk.plan.TransitiveClosure;
+import org.mmtk.utility.Log;
 import org.mmtk.utility.heap.*;
 import org.mmtk.utility.options.Options;
 import org.mmtk.utility.options.MarkSweepMarkBits;
@@ -397,4 +398,16 @@ public final class MarkSweepSpace extends SegregatedFreeListSpace {
   public void makeAllocAsMarked() {
     isAllocAsMarked = true;
   }
+
+  private Address mappedHighMark;
+  @Override
+  public void growSpace(Address start, Extent bytes, boolean newChunk) {
+    if (getName() == "non-moving") {
+      mappedHighMark = start.plus(bytes);
+    }
+  }
+  public Address getMappedHighMark() {
+    return mappedHighMark;
+  }
+
 }
