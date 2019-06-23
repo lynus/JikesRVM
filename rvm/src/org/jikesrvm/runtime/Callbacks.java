@@ -21,6 +21,7 @@ import org.jikesrvm.classloader.RVMMethod;
 import org.jikesrvm.classloader.RVMType;
 import org.jikesrvm.scheduler.RVMThread;
 import org.mmtk.policy.Space;
+import org.vmmagic.pragma.Uninterruptible;
 import org.vmmagic.unboxed.Address;
 
 /**
@@ -1090,8 +1091,9 @@ public final class Callbacks {
     }
   }
 
-  public interface RdmaSpaceGrowMonitor {
-    void notifyRdmaSpaceGrow(Address start, int pages);
+  @Uninterruptible
+  public static abstract class RdmaSpaceGrowMonitor {
+    abstract public void notifyRdmaSpaceGrow(Address start, int pages);
   }
 
   private static CallbackList rdmaSpaceGrowCallbacks = null;
@@ -1104,7 +1106,7 @@ public final class Callbacks {
     rdmaSpace = space;
     rdmaSpaceGrowCallbacks = new CallbackList(cb, rdmaSpaceGrowCallbacks);
   }
-
+  @Uninterruptible
   public static void notifyRdmaSpaceGrow(Space space, Address start, int pages) {
     if (space == rdmaSpace) {
       for (CallbackList l = rdmaSpaceGrowCallbacks; l != null; l = l.next) {

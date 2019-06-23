@@ -45,18 +45,23 @@ public final class BlockAllocator {
   // block freelist
   public static final int LOG_MIN_BLOCK = 12; // 4K bytes
   public static final int LOG_MAX_BLOCK = 15; // 32K bytes
+  public static final int LOG_MIXED_BLOCK = 21; // 4M bytes
+  public static final int MIXED_BLOCK_CLASS = LOG_MIXED_BLOCK - LOG_MIN_BLOCK;
   public static final byte MAX_BLOCK_SIZE_CLASS = LOG_MAX_BLOCK - LOG_MIN_BLOCK;
   public static final int BLOCK_SIZE_CLASSES = MAX_BLOCK_SIZE_CLASS + 1;
 
   // metadata
   private static final Offset NEXT_OFFSET = Offset.zero();
+  //BMD stores block size class
   private static final Offset BMD_OFFSET = NEXT_OFFSET.plus(BYTES_IN_ADDRESS);
   private static final Offset CSC_OFFSET = BMD_OFFSET.plus(1);
   private static final Offset IU_OFFSET = CSC_OFFSET.plus(1);
   private static final Offset FL_META_OFFSET = IU_OFFSET.plus(BYTES_IN_SHORT);
+  //PAGE_INX stores page index within that block
+  private static final Offset PAGE_INX_OFFSET = FL_META_OFFSET.plus(BYTES_IN_ADDRESS);
   private static final byte BLOCK_SC_MASK = 0xf;             // lower 4 bits
   private static final int BLOCK_PAGE_OFFSET_SHIFT = 4;      // higher 4 bits
-  private static final int MAX_BLOCK_PAGE_OFFSET = (1 << 4) - 1; // 4 bits
+  private static final int MAX_BLOCK_PAGE_OFFSET = (1 << 16) - 1; // 4 bits
   private static final int LOG_BYTES_IN_BLOCK_META = LOG_BYTES_IN_ADDRESS + 2;
   private static final int LOG_BYTE_COVERAGE = LOG_MIN_BLOCK - LOG_BYTES_IN_BLOCK_META;
 
@@ -78,7 +83,8 @@ public final class BlockAllocator {
    * zero on failure.
    */
   public static Address alloc(Space space, int blockSizeClass) {
-    if (VM.VERIFY_ASSERTIONS) VM.assertions._assert((blockSizeClass >= 0) && (blockSizeClass <= MAX_BLOCK_SIZE_CLASS));
+    if (VM.VERIFY_ASSERTIONS) VM.assertions._assert((blockSizeClass >= 0) && ((blockSizeClass <= MAX_BLOCK_SIZE_CLASS)||
+            blockSizeClass == MIXED_BLOCK_CLASS));
     int pages = pagesForSizeClass(blockSizeClass);
     Address result = space.acquire(pages);
     if (!result.isZero()) {
@@ -144,8 +150,8 @@ public final class BlockAllocator {
     }
     Address address = block;
     for (int i = 0; i < pagesForSizeClass(sc); i++) {
-      byte value = (byte) ((i << BLOCK_PAGE_OFFSET_SHIFT) | sc);
-      getMetaAddress(address).store(value, BMD_OFFSET);
+      getMetaAddress(address).store(sc, BMD_OFFSET);
+      getMetaAddress(address).store((short)i, PAGE_INX_OFFSET);
       if (VM.VERIFY_ASSERTIONS) {
         VM.assertions._assert(getBlkStart(address).EQ(block));
         VM.assertions._assert(getBlkSizeClass(address) == sc);
@@ -165,8 +171,8 @@ public final class BlockAllocator {
   @Inline
   private static byte getBlkSizeClass(Address address) {
     address = Conversions.pageAlign(address);
-    byte rtn = (byte) (getMetaAddress(address).loadByte(BMD_OFFSET) & BLOCK_SC_MASK);
-    if (VM.VERIFY_ASSERTIONS) VM.assertions._assert(rtn >= 0 && rtn <= MAX_BLOCK_SIZE_CLASS);
+    byte rtn = getMetaAddress(address).loadByte(BMD_OFFSET);
+    if (VM.VERIFY_ASSERTIONS) VM.assertions._assert(rtn >= 0 && (rtn <= MAX_BLOCK_SIZE_CLASS || rtn == MIXED_BLOCK_CLASS));
     return rtn;
   }
 
@@ -180,7 +186,7 @@ public final class BlockAllocator {
   @Inline
   public static Address getBlkStart(Address address) {
     address = Conversions.pageAlign(address);
-    byte offset = (byte) (getMetaAddress(address).loadByte(BMD_OFFSET) >>> BLOCK_PAGE_OFFSET_SHIFT);
+    short offset = getMetaAddress(address).loadShort(PAGE_INX_OFFSET);
     return address.minus(offset << LOG_BYTES_IN_PAGE);
   }
 

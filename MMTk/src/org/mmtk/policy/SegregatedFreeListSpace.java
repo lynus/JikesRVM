@@ -74,6 +74,7 @@ public abstract class SegregatedFreeListSpace extends Space {
   private static final int METADATA_OVERHEAD = META_DATA_PAGES_PER_REGION_WITH_BITMAP; // worst case scenario
   public static final float WORST_CASE_FRAGMENTATION = 1 + ((NEW_SIZECLASS_OVERHEAD + METADATA_OVERHEAD) / (float) EmbeddedMetaData.BYTES_IN_REGION);
 
+  protected static final byte MIXED_CELL_SC = 99;
   /****************************************************************************
    *
    * Instance variables
@@ -86,6 +87,7 @@ public abstract class SegregatedFreeListSpace extends Space {
   protected final AddressArray consumedBlockHead = AddressArray.create(sizeClassCount());
   protected final AddressArray flushedBlockHead = AddressArray.create(sizeClassCount());
   protected final AddressArray availableBlockHead = AddressArray.create(sizeClassCount());
+  protected Address mixedBlockHead = Address.zero();
 
   private final int[] cellSize = new int[sizeClassCount()];
   private final byte[] blockSizeClass = new byte[sizeClassCount()];
@@ -1021,5 +1023,22 @@ public abstract class SegregatedFreeListSpace extends Space {
   }
   public Address getHighWater() {
     return ((FreeListPageResource)pr).getHighWater();
+  }
+
+  public Address allocMixedBlock() {
+    Address block = BlockAllocator.alloc(this, BlockAllocator.MIXED_BLOCK_CLASS);
+    if (block.isZero())
+      return Address.zero();
+    BlockAllocator.setNext(block, Address.zero());
+    BlockAllocator.setAllClientSizeClass(block, BlockAllocator.MIXED_BLOCK_CLASS, MIXED_CELL_SC);
+    lock.acquire();
+    if (mixedBlockHead.isZero()) {
+      mixedBlockHead = block;
+    } else {
+      BlockAllocator.setNext(block, mixedBlockHead);
+      mixedBlockHead = block;
+    }
+    lock.release();
+    return block;
   }
 }

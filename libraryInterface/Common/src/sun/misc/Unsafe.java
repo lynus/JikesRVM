@@ -25,6 +25,7 @@ import org.jikesrvm.scheduler.Synchronization;
 import org.jikesrvm.runtime.Memory;
 import org.jikesrvm.scheduler.RVMThread;
 import org.vmmagic.pragma.Inline;
+import org.vmmagic.unboxed.Extent;
 import org.vmmagic.unboxed.Offset;
 
 import org.vmmagic.unboxed.Address;
@@ -173,6 +174,12 @@ public final class Unsafe {
   public void copyMemory(long srcAddress, long destAddress, long bytes) {
     Memory.memcopy(Address.fromLong(destAddress), Address.fromLong(srcAddress), Offset.fromLong(bytes).toWord().toExtent());
   }
+  public void copyMemory(Object srcBase, long srcOffset, Object dstBase, long dstOffset, long bytes) {
+    Address effectiveSrcAddr = Magic.objectAsAddress(srcBase).plus(Offset.fromLong(srcOffset));
+    Address effectiveDstAddr = Magic.objectAsAddress(dstBase).plus(Offset.fromLong(dstOffset));
+    Extent length = Offset.fromLong(bytes).toWord().toExtent();
+    Memory.memcopy(effectiveDstAddr, effectiveSrcAddr, length);
+  }
 
   @Inline
   public void unpark(Object thread) {
@@ -247,7 +254,7 @@ public final class Unsafe {
 
   @Inline
   public boolean getBoolean(long address) {
-    return Address.fromLong(address).loadByte() == 0;
+    return Address.fromLong(address).loadByte() == 1;
   }
 
   @Inline
@@ -256,7 +263,7 @@ public final class Unsafe {
     if (NEEDS_BOOLEAN_GETFIELD_BARRIER) {
       return booleanFieldRead(obj, off, 0);
     } else {
-      return Magic.getByteAtOffset(obj, off) == 0;
+      return Magic.getByteAtOffset(obj, off) == 1;
     }
   }
 
@@ -266,7 +273,7 @@ public final class Unsafe {
     if (NEEDS_BOOLEAN_GETFIELD_BARRIER) {
       return booleanFieldRead(obj, off, 0);
     } else {
-      return Magic.getByteAtOffset(obj, off) == 0;
+      return Magic.getByteAtOffset(obj, off) == 1;
     }
   }
 
