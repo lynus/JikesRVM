@@ -26,6 +26,7 @@ import org.jikesrvm.objectmodel.TIB;
 import org.jikesrvm.runtime.BootRecord;
 import org.jikesrvm.runtime.Magic;
 import org.jikesrvm.scheduler.RVMThread;
+import org.mmtk.plan.Plan;
 import org.mmtk.policy.Space;
 import org.mmtk.utility.heap.layout.HeapLayout;
 import org.vmmagic.pragma.Interruptible;
@@ -97,6 +98,9 @@ public class DebugUtil {
   public static boolean validRef(ObjectReference ref) {
 
     if (ref.isNull()) return true;
+    if (Plan.nonMovingSpace.isInMixedBlocks(ref)) {
+      return true;
+    }
     if (!Space.isMappedObject(ref)) {
       VM.sysWrite("validRef: REF outside heap, ref = ");
       VM.sysWrite(ref);

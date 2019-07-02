@@ -277,8 +277,11 @@ public abstract class TraceLocal extends TransitiveClosure {
       return Plan.immortalSpace.traceObject(this, object);
     if (Space.isInSpace(Plan.LOS, object))
       return Plan.loSpace.traceObject(this, object);
-    if (Space.isInSpace(Plan.NON_MOVING, object))
-      return Plan.nonMovingSpace.traceObject(this, object);
+    if (Space.isInSpace(Plan.NON_MOVING, object)) {
+      if (!Plan.nonMovingSpace.isInMixedBlocks(object))
+        return Plan.nonMovingSpace.traceObject(this, object);
+      return object;
+    }
     if (Plan.USE_CODE_SPACE && Space.isInSpace(Plan.SMALL_CODE, object))
       return Plan.smallCodeSpace.traceObject(this, object);
     if (Plan.USE_CODE_SPACE && Space.isInSpace(Plan.LARGE_CODE, object))

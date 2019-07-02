@@ -1025,10 +1025,16 @@ public abstract class SegregatedFreeListSpace extends Space {
     return ((FreeListPageResource)pr).getHighWater();
   }
 
+  private int allocCount = 0;
   public Address allocMixedBlock() {
-    Address block = BlockAllocator.alloc(this, BlockAllocator.MIXED_BLOCK_CLASS);
-    if (block.isZero())
-      return Address.zero();
+    Address block;
+    while (true) {
+      block = BlockAllocator.alloc(this, BlockAllocator.MIXED_BLOCK_CLASS);
+      if (block.isZero())
+        allocCount++;
+      else
+        break;
+    }
     BlockAllocator.setNext(block, Address.zero());
     BlockAllocator.setAllClientSizeClass(block, BlockAllocator.MIXED_BLOCK_CLASS, MIXED_CELL_SC);
     lock.acquire();
@@ -1040,5 +1046,22 @@ public abstract class SegregatedFreeListSpace extends Space {
     }
     lock.release();
     return block;
+  }
+
+  public boolean isInMixedBlocks(ObjectReference objectReference) {
+    Address objAddr = VM.objectModel.refToAddress(objectReference);
+    Address blockHead;
+    lock.acquire();
+    blockHead = mixedBlockHead;
+    lock.release();
+    if (blockHead.isZero())
+      return false;
+    while (!blockHead.isZero()) {
+      if (objAddr.GE(blockHead) && objAddr.LE(blockHead.plus(1 << BlockAllocator.LOG_MIXED_BLOCK))) {
+        return true;
+      } else
+        blockHead = BlockAllocator.getNext(blockHead);
+    }
+    return false;
   }
 }
